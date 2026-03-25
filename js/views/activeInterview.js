@@ -7,9 +7,12 @@ export function renderActiveInterview(container, params = {}) {
         return;
     }
 
+    let phase = 'intro';
+    let personalData = { email: '', birthDate: '', address: '' };
+
     let currentIndex = 0;
     const totalQuestions = role.questions.length;
-    let startTime = Date.now();
+    let startTime = null;
     let timerInterval = null;
     let secondsElapsed = 0;
     
@@ -49,9 +52,82 @@ export function renderActiveInterview(container, params = {}) {
     };
 
     const render = () => {
+        container.innerHTML = '';
+        window.scrollTo(0, 0);
+
+        if (phase === 'intro') {
+            container.innerHTML = `
+                <div style="max-width: 640px; margin: 0 auto; padding-top: 2rem;">
+                    <div style="text-align: center; margin-bottom: 2.5rem;">
+                        <h2 style="font-size: 1.75rem; font-weight: 600;">Új interjú: ${candidateName}</h2>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem;">Munkakör: <strong style="color: var(--text-primary);">${role.title}</strong></p>
+                    </div>
+
+                    <div class="card" style="padding: 2rem;">
+                        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="user" style="width: 1.25rem; color: var(--accent);"></i> Jelölt Adatai
+                        </h3>
+
+                        <div class="form-group">
+                            <label class="form-label">Email cím *</label>
+                            <input type="email" id="active-email" class="form-input" placeholder="pl. pelda@email.com" value="${personalData.email}">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Születési idő</label>
+                            <input type="date" id="active-birthdate" class="form-input" max="${new Date().toISOString().slice(0, 10)}" value="${personalData.birthDate}">
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="form-label">Lakcím</label>
+                            <input type="text" id="active-address" class="form-input" placeholder="pl. 1051 Budapest, Fő utca 1." value="${personalData.address}">
+                        </div>
+
+                        <div class="mt-6 flex justify-end">
+                            <button class="btn btn-primary" id="btn-start-active" style="padding: 0.75rem 2rem; font-size: 1rem;">
+                                Tovább az interjúhoz <i data-lucide="arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+
+            document.getElementById('btn-start-active')?.addEventListener('click', () => {
+                const ce = document.getElementById('active-email').value.trim();
+                const bd = document.getElementById('active-birthdate').value;
+                const ad = document.getElementById('active-address').value.trim();
+
+                if (!ce || !ce.includes('@')) { alert('Kérlek adj meg egy érvényes email címet a jelölt számára!'); return; }
+                if (!bd) { alert('Kérlek add meg a jelölt születési dátumát!'); return; }
+                if (!ad) { alert('Kérlek add meg a jelölt lakcímét!'); return; }
+
+                // Duplicate check
+                const existingInterviews = window.appStore.getInterviews();
+                const alreadyCompleted = existingInterviews.some(i => 
+                    (i.roleId === roleId) && 
+                    (i.candidateEmail || '').toLowerCase() === ce.toLowerCase()
+                );
+                if (alreadyCompleted) {
+                    alert('Ezzel az email címmel már van lezárt interjú ehhez a munkakörhöz!');
+                    return;
+                }
+
+                personalData.email = ce;
+                personalData.birthDate = bd;
+                personalData.address = ad;
+
+                phase = 'questions';
+                startTime = Date.now();
+                startTimer();
+                render();
+            });
+            return;
+        }
+
         const question = role.questions[currentIndex];
         const progressPercent = ((currentIndex) / totalQuestions) * 100;
-        
+
         container.innerHTML = `
             <div style="max-width: 800px; margin: 0 auto; padding-top: 1rem;">
                 
@@ -177,9 +253,14 @@ export function renderActiveInterview(container, params = {}) {
             window.appStore.saveInterview({
                 roleId,
                 candidateName,
+                candidateEmail: personalData.email,
                 date,
                 duration: secondsElapsed,
-                answers
+                personalData,
+                answers,
+                isSelfAssessment: false,
+                issuedBy: window.appAuth.getUser().id || '',
+                issuedByName: window.appAuth.getUser().displayName || ''
             });
             
             // Navigate to dashboard
@@ -188,6 +269,5 @@ export function renderActiveInterview(container, params = {}) {
     };
 
     // Initialize
-    startTimer();
     render();
 }
