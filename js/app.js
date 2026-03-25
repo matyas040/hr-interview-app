@@ -1,16 +1,16 @@
-import { Store } from './store.js?v=10';
-import { renderLogin } from './views/login.js';
-import { renderDashboard } from './views/dashboard.js';
-import { renderRoleManager } from './views/roleManager.js';
-import { renderInterviewSetup } from './views/interviewSetup.js';
-import { renderActiveInterview } from './views/activeInterview.js';
-import { renderCandidateInterview } from './views/candidateInterview.js';
-import { renderEvaluation } from './views/evaluation.js';
-import { renderAdminPanel } from './views/adminPanel.js';
-import { renderExitInterview } from './views/exitInterview.js';
-import { renderHrStats } from './views/hrStats.js';
+import { Store } from './store.js?v=14';
+import { renderLogin } from './views/login.js?v=14';
+import { renderDashboard } from './views/dashboard.js?v=14';
+import { renderRoleManager } from './views/roleManager.js?v=14';
+import { renderInterviewSetup } from './views/interviewSetup.js?v=14';
+import { renderActiveInterview } from './views/activeInterview.js?v=14';
+import { renderCandidateInterview } from './views/candidateInterview.js?v=14';
+import { renderEvaluation } from './views/evaluation.js?v=14';
+import { renderAdminPanel } from './views/adminPanel.js?v=14';
+import { renderExitInterview } from './views/exitInterview.js?v=14';
+import { renderHrStats } from './views/hrStats.js?v=14';
 
-// Simple Auth Session Manager (sessionStorage for browser-tab scope)
+// Firebase Auth Bridge
 class Auth {
     constructor(store) {
         this.store = store;
@@ -21,11 +21,15 @@ class Auth {
         // Listen for Firebase Auth changes
         this.store.onAuthChange((fbUser) => {
             if (fbUser) {
-                const storedUser = this.store.users.find(u => u.username === fbUser.email);
+                // Try matching by full email, or just the username prefix (e.g. "admin" from "admin@hr-app.com")
+                const emailPrefix = fbUser.email.split('@')[0];
+                const storedUser = this.store.users.find(u =>
+                    u.username === fbUser.email || u.username === emailPrefix
+                );
                 this.currentUser = storedUser || {
                     id: fbUser.uid,
                     username: fbUser.email,
-                    displayName: fbUser.email.split('@')[0],
+                    displayName: emailPrefix,
                     role: 'admin'
                 };
             } else {
@@ -47,16 +51,19 @@ class Auth {
     async login(email, password) { return this.store.login(email, password); }
     async logout() { await this.store.logout(); location.reload(); }
 
-    // Call this after store.init() to re-resolve the full user record from Firestore
+    // Re-resolve the user from Firestore after store.init() loads
     refreshFromStore() {
         if (!this.currentUser) return;
-        const storedUser = this.store.users.find(u => u.username === this.currentUser.username);
+        const emailPrefix = (this.currentUser.username || '').split('@')[0];
+        const storedUser = this.store.users.find(u =>
+            u.username === this.currentUser.username || u.username === emailPrefix
+        );
         if (storedUser) {
             this.currentUser = { ...storedUser };
         }
-        // Ensure role is always set
+        // Ensure role and displayName are always set
         if (!this.currentUser.role) this.currentUser.role = 'admin';
-        if (!this.currentUser.displayName) this.currentUser.displayName = this.currentUser.username || 'HR';
+        if (!this.currentUser.displayName) this.currentUser.displayName = emailPrefix || 'HR';
     }
 }
 
