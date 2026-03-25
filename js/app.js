@@ -44,6 +44,7 @@ class Auth {
 
     isLoggedIn() { return !!this.currentUser; }
     getUser() { return this.currentUser; }
+    async login(email, password) { return this.store.login(email, password); }
     async logout() { await this.store.logout(); location.reload(); }
 }
 
