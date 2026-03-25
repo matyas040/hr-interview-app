@@ -13,6 +13,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, "hr-app2");
+console.log("🔥 Firebase: Csatlakozás a 'hr-app2' adatbázishoz...");
 
 /**
  * Store class manages Firestore interactions with optimistic local state.
