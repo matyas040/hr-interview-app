@@ -29,14 +29,15 @@ export class Store {
     async init() {
         if (this.initialized) return;
         
-        console.log("Store: Initializing Firestore...");
+        console.log("🏪 Store: Firestore szinkronizáció indítása...");
         
         // Helper to add timeout to promises
         const timeout = (ms) => new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Időtúllépés az adatbázis kapcsolódásakor. Ellenőrizd a Firestore beállításokat!")), ms)
+            setTimeout(() => reject(new Error("Firebase időtúllépés: Ellenőrizd a Firestore Database 'Rules' fülét!")), ms)
         );
 
         try {
+            console.log("🏪 Store: Kollekciók lekérése folyamatban...");
             // Load initial data from Firestore with a 10s timeout
             const [rolesSnap, interviewsSnap, usersSnap] = await Promise.race([
                 Promise.all([
@@ -47,12 +48,14 @@ export class Store {
                 timeout(10000)
             ]);
 
+            console.log("🏪 Store: Adatok megérkeztek. Feldolgozás...");
             this.roles = rolesSnap.docs.map(d => d.data());
             this.interviews = interviewsSnap.docs.map(d => d.data());
             this.users = usersSnap.docs.map(d => d.data());
 
             // Seed default admin if no users exist
             if (this.users.length === 0) {
+                console.log("🏪 Store: Alapértelmezett admin létrehozása...");
                 const admin = { id: 'u_admin', username: 'admin', password: 'admin1234', role: 'admin', displayName: 'Rendszergazda' };
                 this.users.push(admin);
                 await setDoc(doc(db, 'users', admin.id), admin);
@@ -60,6 +63,7 @@ export class Store {
 
             // Populate dummy role data if empty
             if (this.roles.length === 0) {
+                console.log("🏪 Store: Alapértelmezett munkakör létrehozása...");
                 const dummyRole = {
                     id: 'r_1',
                     title: 'Szoftverfejlesztő (Software Engineer)',
@@ -74,9 +78,9 @@ export class Store {
             }
 
             this.initialized = true;
-            console.log("Store: Firestore initialized successfully.");
+            console.log("🏪 Store: SIKERES Firestore inicializáció.");
         } catch (err) {
-            console.error("Store: Initialization error:", err);
+            console.error("🏪 Store: HIBA az inicializáció során:", err);
             throw err;
         }
     }
