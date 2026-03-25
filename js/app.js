@@ -50,7 +50,23 @@ class App {
             await this.store.init();
         } catch (err) {
             console.error(err);
-            this.container.innerHTML = `<div style="padding:2rem;color:var(--danger);text-align:center;">Hiba az adatbázis csatlakozásakor. Frissítsd az oldalt!</div>`;
+            this.container.innerHTML = `
+                <div style="padding:2rem; text-align:center; max-width: 500px; margin: 0 auto;">
+                    <div style="color:var(--danger); font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Hiba az adatbázis szinkronizálásakor</div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: left; font-size: 0.875rem; margin-bottom: 1.5rem;">
+                        <code>${err.message}</code>
+                    </div>
+                    <div style="text-align: left; font-size: 0.9rem; line-height: 1.5;">
+                        <p>Valószínűleg a Firebase beállításoknál maradt le valami. Kérlek ellenőrizd ezeket:</p>
+                        <ul style="padding-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>Létrehoztad a <b>Firestore Database</b>-t a Firebase konzolon?</li>
+                            <li>Beállítottad a szabályokat (Rules) <b>Test mode</b>-ra (allow read, write: if true)?</li>
+                            <li>Kiválasztottad a szerver helyét (Location)?</li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 2rem;">🔄 Újrapróbálás</button>
+                </div>
+            `;
             return;
         }
 

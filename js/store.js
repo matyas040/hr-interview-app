@@ -29,40 +29,56 @@ export class Store {
     async init() {
         if (this.initialized) return;
         
-        // Load initial data from Firestore
-        const [rolesSnap, interviewsSnap, usersSnap] = await Promise.all([
-            getDocs(collection(db, 'roles')),
-            getDocs(collection(db, 'interviews')),
-            getDocs(collection(db, 'users'))
-        ]);
+        console.log("Store: Initializing Firestore...");
+        
+        // Helper to add timeout to promises
+        const timeout = (ms) => new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Időtúllépés az adatbázis kapcsolódásakor. Ellenőrizd a Firestore beállításokat!")), ms)
+        );
 
-        this.roles = rolesSnap.docs.map(d => d.data());
-        this.interviews = interviewsSnap.docs.map(d => d.data());
-        this.users = usersSnap.docs.map(d => d.data());
+        try {
+            // Load initial data from Firestore with a 10s timeout
+            const [rolesSnap, interviewsSnap, usersSnap] = await Promise.race([
+                Promise.all([
+                    getDocs(collection(db, 'roles')),
+                    getDocs(collection(db, 'interviews')),
+                    getDocs(collection(db, 'users'))
+                ]),
+                timeout(10000)
+            ]);
 
-        // Seed default admin if no users exist
-        if (this.users.length === 0) {
-            const admin = { id: 'u_admin', username: 'admin', password: 'admin1234', role: 'admin', displayName: 'Rendszergazda' };
-            this.users.push(admin);
-            await setDoc(doc(db, 'users', admin.id), admin);
+            this.roles = rolesSnap.docs.map(d => d.data());
+            this.interviews = interviewsSnap.docs.map(d => d.data());
+            this.users = usersSnap.docs.map(d => d.data());
+
+            // Seed default admin if no users exist
+            if (this.users.length === 0) {
+                const admin = { id: 'u_admin', username: 'admin', password: 'admin1234', role: 'admin', displayName: 'Rendszergazda' };
+                this.users.push(admin);
+                await setDoc(doc(db, 'users', admin.id), admin);
+            }
+
+            // Populate dummy role data if empty
+            if (this.roles.length === 0) {
+                const dummyRole = {
+                    id: 'r_1',
+                    title: 'Szoftverfejlesztő (Software Engineer)',
+                    questions: [
+                        { id: 'q_1', text: 'Rendelkezik-e tapasztalattal React és modern JS terén?', answerType: 'detailed' },
+                        { id: 'q_2', text: 'Ismeri-e a verziókövető rendszereket (git)?', answerType: 'short' },
+                        { id: 'q_3', text: 'Képes-e önállóan problémamegoldásra és csapatban dolgozni?', answerType: 'detailed' }
+                    ]
+                };
+                this.roles.push(dummyRole);
+                await setDoc(doc(db, 'roles', dummyRole.id), dummyRole);
+            }
+
+            this.initialized = true;
+            console.log("Store: Firestore initialized successfully.");
+        } catch (err) {
+            console.error("Store: Initialization error:", err);
+            throw err;
         }
-
-        // Populate dummy role data if empty
-        if (this.roles.length === 0) {
-            const dummyRole = {
-                id: 'r_1',
-                title: 'Szoftverfejlesztő (Software Engineer)',
-                questions: [
-                    { id: 'q_1', text: 'Rendelkezik-e tapasztalattal React és modern JS terén?', answerType: 'detailed' },
-                    { id: 'q_2', text: 'Ismeri-e a verziókövető rendszereket (git)?', answerType: 'short' },
-                    { id: 'q_3', text: 'Képes-e önállóan problémamegoldásra és csapatban dolgozni?', answerType: 'detailed' }
-                ]
-            };
-            this.roles.push(dummyRole);
-            await setDoc(doc(db, 'roles', dummyRole.id), dummyRole);
-        }
-
-        this.initialized = true;
     }
 
     // -- Roles --
