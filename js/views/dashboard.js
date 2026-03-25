@@ -63,9 +63,14 @@ export function renderDashboard(container) {
                                         <p style="color: var(--text-secondary); font-size: 0.875rem;">${roleTitle}</p>
                                     </div>
                                 </div>
-                                <div class="text-right" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
-                                    <p style="font-size: 0.875rem;">${dateStr}</p>
-                                    ${!isExit ? `<span style="font-size: 0.75rem; color: ${hs.color}; font-weight: 500;">${hs.label}</span>` : ''}
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div class="text-right" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+                                        <p style="font-size: 0.875rem;">${dateStr}</p>
+                                        ${!isExit ? `<span style="font-size: 0.75rem; color: ${hs.color}; font-weight: 500;">${hs.label}</span>` : ''}
+                                    </div>
+                                    <button class="btn btn-danger" style="padding: 0.4rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 2.2rem; height: 2.2rem;" title="Interjú törlése" onclick="event.stopPropagation(); if(confirm('Valóban törölni szeretnéd ezt az interjút? Ezt nem lehet visszavonni.')) { window.appStore.deleteInterview('${inv.id}'); window.navigateTo('dashboard'); }">
+                                        <i data-lucide="trash-2" style="width: 1rem; height: 1rem;"></i>
+                                    </button>
                                 </div>
                             </div>
                         `;

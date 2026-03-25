@@ -219,6 +219,15 @@ export class Store {
         }
     }
 
+    deleteInterview(id) {
+        // Remove locally
+        this.interviews = this.interviews.filter(i => i.id !== id);
+        // Remove from Firestore
+        deleteDoc(doc(db, 'interviews', id)).catch(err => {
+            console.error("Error deleting interview:", err);
+        });
+    }
+
     saveAiResult(interviewId, aiResult) {
         const interview = this.interviews.find(i => i.id === interviewId);
         if (interview) {

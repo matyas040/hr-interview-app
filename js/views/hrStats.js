@@ -297,9 +297,14 @@ export function renderHrStats(container) {
                         <span style="font-size:0.75rem;font-weight:600;padding:0.2rem 0.65rem;border-radius:1rem;background:${hasExited ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)'};color:${hasExited ? 'var(--warning)' : 'var(--success)'};">
                             ${hasExited ? '⚠ Kilépett' : '✓ Aktív'}
                         </span>
-                        <button class="btn btn-secondary" onclick="window.navigateTo('evaluation',{interviewId:'${iv.id}'})" style="font-size:0.75rem;padding:0.3rem 0.75rem;">
-                            <i data-lucide="eye" style="width:0.8rem;"></i> Értékelés
-                        </button>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" onclick="window.navigateTo('evaluation',{interviewId:'${iv.id}'})" style="font-size:0.75rem;padding:0.3rem 0.75rem;">
+                                <i data-lucide="eye" style="width:0.8rem;"></i> Értékelés
+                            </button>
+                            <button class="btn btn-danger" style="padding: 0.3rem 0.5rem; display: flex; align-items: center; justify-content: center;" title="Törlés" onclick="event.stopPropagation(); if(confirm('Valóban törölni szeretnéd ezt az interjút?')) { window.appStore.deleteInterview('${iv.id}'); window.navigateTo('dashboard'); }">
+                                <i data-lucide="trash-2" style="width: 0.8rem; height: 0.8rem;"></i>
+                            </button>
+                        </div>
                     </div>`;
                 }).join('')}
             </div>` : '<p style="color:var(--text-secondary);">Még nem vett fel senkit.</p>'}
@@ -321,9 +326,14 @@ export function renderHrStats(container) {
                             <div style="font-size:0.75rem;color:var(--text-secondary);">Kilépés: ${formatDate(iv.date)} · Ok: ${reasonLabels[ed.reason] || ed.reason || '(nem adta meg)'}</div>
                         </div>
                         <span style="font-size:0.75rem;font-weight:600;padding:0.2rem 0.65rem;border-radius:1rem;background:rgba(239,68,68,0.1);color:var(--danger);">Kilépett</span>
-                        <button class="btn btn-secondary" onclick="window.navigateTo('evaluation',{interviewId:'${iv.id}'})" style="font-size:0.75rem;padding:0.3rem 0.75rem;">
-                            <i data-lucide="eye" style="width:0.8rem;"></i> Kérdőív
-                        </button>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" onclick="window.navigateTo('evaluation',{interviewId:'${iv.id}'})" style="font-size:0.75rem;padding:0.3rem 0.75rem;">
+                                <i data-lucide="eye" style="width:0.8rem;"></i> Kérdőív
+                            </button>
+                            <button class="btn btn-danger" style="padding: 0.3rem 0.5rem; display: flex; align-items: center; justify-content: center;" title="Törlés" onclick="event.stopPropagation(); if(confirm('Valóban törölni szeretnéd ezt a kilépő interjút?')) { window.appStore.deleteInterview('${iv.id}'); window.navigateTo('dashboard'); }">
+                                <i data-lucide="trash-2" style="width: 0.8rem; height: 0.8rem;"></i>
+                            </button>
+                        </div>
                     </div>`;
                 }).join('')}
             </div>
