@@ -72,7 +72,7 @@ export function renderInterviewSetup(container, params = {}) {
             return;
         }
 
-        const currentUser = window.appAuth.getCurrentUser();
+        const currentUser = window.appAuth.getUser();
         const issuedById   = currentUser ? currentUser.id       : '';
         const issuedByName = currentUser ? currentUser.displayName : '';
 
