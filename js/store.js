@@ -12,7 +12,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getFirestore(app, "hr-app2");
 
 /**
  * Store class manages Firestore interactions with optimistic local state.
