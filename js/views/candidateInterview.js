@@ -14,32 +14,9 @@ export function renderCandidateInterview(container, params = {}) {
         return;
     }
 
-    // Check if already completed
-    const existingInterviews = window.appStore.getInterviews();
-    const alreadyCompleted = existingInterviews.some(i => 
-        i.type === 'candidate' && 
-        i.roleId === roleId && 
-        i.candidateName.toLowerCase() === (candidateName || '').toLowerCase() &&
-        i.issuedBy === issuedBy
-    );
-
-    if (alreadyCompleted) {
-        container.innerHTML = `
-            <div class="card" style="max-width: 600px; margin: 4rem auto; text-align: center; padding: 3rem 2rem;">
-                <div style="width: 4rem; height: 4rem; background: rgba(59, 130, 246, 0.1); color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                    <i data-lucide="check-circle" style="width: 2rem; height: 2rem;"></i>
-                </div>
-                <h2 style="font-size: 1.75rem; font-weight: 600;" class="mb-2">Már kitöltötted</h2>
-                <p style="color: var(--text-secondary);">Ezt az interjút korábban már sikeresen beküldted. További teendőd nincs.</p>
-            </div>
-        `;
-        lucide.createIcons();
-        return;
-    }
-
     // Phase: 'intro' | 'pdf' | 'questions' | 'done'
     let phase = 'intro';
-    let personalData = { birthDate: '', address: '' };
+    let personalData = { birthDate: '', address: '', email: '' };
 
     let currentIndex = 0;
     const totalQuestions = role.questions.length;
@@ -92,6 +69,11 @@ export function renderCandidateInterview(container, params = {}) {
                         <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">Kérlek add meg az alábbi adatokat <strong>a kérdőív megkezdése előtt</strong>.</p>
 
                         <div class="form-group">
+                            <label class="form-label">Email címed *</label>
+                            <input type="email" id="cand-email" class="form-input" placeholder="pl. pelda@email.com" value="${personalData.email}">
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label">Születési idő</label>
                             <input type="date" id="cand-birthdate" class="form-input" max="${new Date().toISOString().slice(0, 10)}" value="${personalData.birthDate}">
                         </div>
@@ -112,12 +94,27 @@ export function renderCandidateInterview(container, params = {}) {
             lucide.createIcons();
 
             document.getElementById('btn-start-questions')?.addEventListener('click', () => {
+                const ce = document.getElementById('cand-email').value.trim();
                 const bd = document.getElementById('cand-birthdate').value;
                 const ad = document.getElementById('cand-address').value.trim();
 
+                if (!ce || !ce.includes('@')) { alert('Kérlek adj meg egy érvényes email címet!'); return; }
                 if (!bd) { alert('Kérlek add meg a születési dátumod!'); return; }
                 if (!ad) { alert('Kérlek add meg a lakcímed!'); return; }
 
+                // Check for duplicate submission based on email and role
+                const existingInterviews = window.appStore.getInterviews();
+                const alreadyCompleted = existingInterviews.some(i => 
+                    i.type === 'candidate' && 
+                    i.roleId === roleId && 
+                    (i.candidateEmail || '').toLowerCase() === ce.toLowerCase()
+                );
+                if (alreadyCompleted) {
+                    alert('Ezzel az email címmel már kitöltötted ezt az interjút!');
+                    return;
+                }
+
+                personalData.email     = ce;
                 personalData.birthDate = bd;
                 personalData.address   = ad;
 

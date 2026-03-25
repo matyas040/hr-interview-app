@@ -44,6 +44,11 @@ export function renderExitInterview(container, params = {}) {
                 <div class="card" style="padding: 2rem;">
 
                     <div class="form-group">
+                        <label class="form-label">Email címed *</label>
+                        <input type="email" id="exit-email" class="form-input" placeholder="pl. pelda@email.com">
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label">Teljes neved *</label>
                         <input type="text" id="exit-name" class="form-input" placeholder="pl. Kovács János" value="${employeeName || ''}">
                     </div>
@@ -102,6 +107,7 @@ export function renderExitInterview(container, params = {}) {
         lucide.createIcons();
 
         document.getElementById('btn-exit-submit')?.addEventListener('click', () => {
+            const email  = document.getElementById('exit-email').value.trim();
             const name   = document.getElementById('exit-name').value.trim();
             const dept   = document.getElementById('exit-dept').value.trim();
             const reason = document.getElementById('exit-reason').value;
@@ -111,14 +117,28 @@ export function renderExitInterview(container, params = {}) {
             const recommend = recVal ? recVal.value : '';
             const other  = document.getElementById('exit-other').value.trim();
 
-            if (!name) { alert('Kérlek add meg a nevед!'); return; }
+            if (!email || !email.includes('@')) { alert('Kérlek adj meg egy érvényes email címet!'); return; }
+            if (!name) { alert('Kérlek add meg a neved!'); return; }
             if (!reason) { alert('Kérlek válaszd ki az elsődleges kilépési okot!'); return; }
             if (!liked)  { alert('Kérlek töltsd ki, mi tetszett leginkább!'); return; }
+
+            // Check if already completed
+            const existingInterviews = window.appStore.getInterviews();
+            const alreadyCompleted = existingInterviews.some(i => 
+                i.type === 'exit' && 
+                (i.candidateEmail || '').toLowerCase() === email.toLowerCase()
+            );
+
+            if (alreadyCompleted) {
+                alert('Ezzel az email címmel már kitöltötted a kilépő kérdőívet!');
+                return;
+            }
 
             const durationSecs = Math.floor((Date.now() - startTime) / 1000);
 
             window.appStore.saveInterview({
                 type:          'exit',
+                candidateEmail: email,
                 candidateName: name,
                 date:          new Date().toISOString(),
                 duration:      durationSecs,
