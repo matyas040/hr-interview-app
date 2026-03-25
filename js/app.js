@@ -1,4 +1,4 @@
-import { Store } from './store.js';
+import { Store } from './store.js?v=10';
 import { renderLogin } from './views/login.js';
 import { renderDashboard } from './views/dashboard.js';
 import { renderRoleManager } from './views/roleManager.js';
