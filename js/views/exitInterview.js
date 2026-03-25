@@ -109,7 +109,7 @@ export function renderExitInterview(container, params = {}) {
             });
 
             renderThankYou(name);
-            window.history.replaceState({}, document.title, window.location.pathname);
+            
         });
     };
 

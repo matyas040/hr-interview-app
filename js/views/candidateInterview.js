@@ -261,7 +261,7 @@ export function renderCandidateInterview(container, params = {}) {
             
             phase = 'done';
             render();
-            window.history.replaceState({}, document.title, window.location.pathname);
+            
         });
     };
 
