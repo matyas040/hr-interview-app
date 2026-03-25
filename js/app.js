@@ -46,6 +46,18 @@ class Auth {
     getUser() { return this.currentUser; }
     async login(email, password) { return this.store.login(email, password); }
     async logout() { await this.store.logout(); location.reload(); }
+
+    // Call this after store.init() to re-resolve the full user record from Firestore
+    refreshFromStore() {
+        if (!this.currentUser) return;
+        const storedUser = this.store.users.find(u => u.username === this.currentUser.username);
+        if (storedUser) {
+            this.currentUser = { ...storedUser };
+        }
+        // Ensure role is always set
+        if (!this.currentUser.role) this.currentUser.role = 'admin';
+        if (!this.currentUser.displayName) this.currentUser.displayName = this.currentUser.username || 'HR';
+    }
 }
 
 class App {
@@ -70,8 +82,10 @@ class App {
 
         try {
             await this.store.init();
-            // Wait for Auth to settle (is someone logged in?)
+            // Wait for Firebase Auth to resolve before checking login
             await this.auth.onReady();
+            // Now that Firestore is loaded, sync auth user with Firestore profile
+            this.auth.refreshFromStore();
         } catch (err) {
             console.error(err);
             this.container.innerHTML = `
@@ -94,15 +108,17 @@ class App {
             return;
         }
 
+        // ⚠️ Check for public routes BEFORE waiting for auth
+        // so a logged-in HR user can also open & refresh candidate links
         const urlParams = new URLSearchParams(window.location.search);
         const isCandidate = urlParams.has('candidate');
         const isExit = urlParams.has('exit');
 
         if (isCandidate) {
-            const roleId       = urlParams.get('role');
+            const roleId        = urlParams.get('role');
             const candidateName = urlParams.get('name') || 'Jelölt';
-            const issuedBy     = urlParams.get('issuedBy') || '';
-            const issuedByName = urlParams.get('issuedByName') || '';
+            const issuedBy      = urlParams.get('issuedBy') || '';
+            const issuedByName  = urlParams.get('issuedByName') || '';
             const header = document.querySelector('.app-header');
             if (header) header.style.display = 'none';
             this.navigate('candidateInterview', { roleId, candidateName, issuedBy, issuedByName });
@@ -118,6 +134,9 @@ class App {
             this.navigate('exitInterview', { employeeName, issuedBy, issuedByName });
             return;
         }
+
+        // Wait for Firebase Auth to resolve before checking login
+        await this.auth.onReady();
 
         // Guard: require login for all other routes
         if (!window.appAuth.isLoggedIn()) {
@@ -160,9 +179,12 @@ class App {
         const headerActions = document.querySelector('.header-actions');
         if (!headerActions || !user) return;
 
+        const displayName = user.displayName || user.username || 'HR';
+        const displayInitial = displayName.charAt(0).toUpperCase();
+        const role = user.role || 'admin';
         headerActions.innerHTML = `
             <div style="display: flex; align-items: center; gap: 1rem;">
-                ${user.role === 'admin' ? `
+                ${role === 'admin' ? `
                     <button class="btn btn-secondary" id="btn-stats" style="font-size: 0.8rem; padding: 0.4rem 1rem;">
                         <i data-lucide="bar-chart-2" style="width: 0.875rem;"></i> Statisztika
                     </button>
@@ -171,10 +193,10 @@ class App {
                     </button>
                 ` : ''}
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 2rem; height: 2rem; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; color: white;">${user.displayName.charAt(0)}</div>
+                    <div style="width: 2rem; height: 2rem; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; color: white;">${displayInitial}</div>
                     <div style="font-size: 0.875rem;">
-                        <div style="font-weight: 500;">${user.displayName}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.75rem;">${user.role === 'admin' ? 'Admin' : 'HR Kolléga'}</div>
+                        <div style="font-weight: 500;">${displayName}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">${role === 'admin' ? 'Admin' : 'HR Kolléga'}</div>
                     </div>
                 </div>
                 <button id="btn-logout" class="btn-icon" title="Kijelentkezés">
