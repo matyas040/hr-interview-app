@@ -12,24 +12,45 @@ import { renderHrStats } from './views/hrStats.js';
 
 // Simple Auth Session Manager (sessionStorage for browser-tab scope)
 class Auth {
-    getCurrentUser() {
-        const raw = sessionStorage.getItem('hr_current_user');
-        return raw ? JSON.parse(raw) : null;
+    constructor(store) {
+        this.store = store;
+        this.currentUser = null;
+        this.initialized = false;
+        this.onReadyCallbacks = [];
+
+        // Listen for Firebase Auth changes
+        this.store.onAuthChange((fbUser) => {
+            if (fbUser) {
+                const storedUser = this.store.users.find(u => u.username === fbUser.email);
+                this.currentUser = storedUser || {
+                    id: fbUser.uid,
+                    username: fbUser.email,
+                    displayName: fbUser.email.split('@')[0],
+                    role: 'admin'
+                };
+            } else {
+                this.currentUser = null;
+            }
+            this.initialized = true;
+            this.onReadyCallbacks.forEach(cb => cb(this.currentUser));
+            this.onReadyCallbacks = [];
+        });
     }
-    setCurrentUser(user) {
-        sessionStorage.setItem('hr_current_user', JSON.stringify(user));
+
+    async onReady() {
+        if (this.initialized) return this.currentUser;
+        return new Promise(resolve => this.onReadyCallbacks.push(resolve));
     }
-    logout() {
-        sessionStorage.removeItem('hr_current_user');
-    }
-    isLoggedIn() {
-        return !!this.getCurrentUser();
-    }
+
+    isLoggedIn() { return !!this.currentUser; }
+    getUser() { return this.currentUser; }
+    async logout() { await this.store.logout(); location.reload(); }
 }
 
 class App {
     constructor() {
         this.store = new Store();
+        this.auth = new Auth(this.store);
         this.container = document.getElementById('app-container');
         this.initTheme();
         this.setupGlobals();
@@ -48,6 +69,8 @@ class App {
 
         try {
             await this.store.init();
+            // Wait for Auth to settle (is someone logged in?)
+            await this.auth.onReady();
         } catch (err) {
             console.error(err);
             this.container.innerHTML = `
@@ -128,11 +151,11 @@ class App {
     setupGlobals() {
         window.navigateTo = this.navigate.bind(this);
         window.appStore   = this.store;
-        window.appAuth    = new Auth();
+        window.appAuth    = this.auth;
     }
 
     updateHeader() {
-        const user = window.appAuth.getCurrentUser();
+        const user = window.appAuth.getUser();
         const headerActions = document.querySelector('.header-actions');
         if (!headerActions || !user) return;
 

@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCjlmIojGSgUUpds-cejwnlPkb0tZTynOc",
@@ -13,7 +14,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, "hr-app2");
-console.log("🔥 Firebase: Csatlakozás a 'hr-app2' adatbázishoz...");
+const auth = getAuth(app);
+console.log("🔥 Firebase: Csatlakozás a 'hr-app2' adatbázishoz és Auth rendszerhez...");
 
 /**
  * Store class manages Firestore interactions with optimistic local state.
@@ -275,5 +277,22 @@ export class Store {
     deleteUser(id) {
         this.users = this.users.filter(u => u.id !== id);
         deleteDoc(doc(db, 'users', id));
+    }
+
+    // -- Auth Bridge --
+    async login(email, password) {
+        return signInWithEmailAndPassword(auth, email, password);
+    }
+
+    async logout() {
+        return signOut(auth);
+    }
+
+    onAuthChange(callback) {
+        return onAuthStateChanged(auth, callback);
+    }
+
+    getAuth() {
+        return auth;
     }
 }

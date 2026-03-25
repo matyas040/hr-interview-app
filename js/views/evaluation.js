@@ -297,10 +297,15 @@ export async function renderEvaluation(container, params = {}) {
     // Build main shell (AI card injected async below)
     container.innerHTML = `
         <div class="mb-6">
-            <button class="btn btn-secondary mb-4" onclick="window.navigateTo('dashboard')">
-                <i data-lucide="arrow-left"></i> Vissza az irányítópultra
-            </button>
-            <div class="flex justify-between items-start">
+            <div class="flex justify-between items-center mb-4">
+                <button class="btn btn-secondary" onclick="window.navigateTo('dashboard')">
+                    <i data-lucide="arrow-left"></i> Vissza az irányítópultra
+                </button>
+                <button class="btn btn-primary" id="btn-export-pdf" style="font-size: 0.875rem;">
+                    <i data-lucide="download"></i> Letöltés PDF-ben
+                </button>
+            </div>
+            <div class="flex justify-between items-start" id="pdf-header">
                 <div>
                     <h2 style="font-size: 1.5rem; font-weight: 600;">Kiértékelés: ${interview.candidateName}</h2>
                     <p style="color: var(--text-secondary);" class="mt-1">Munkakör: <strong style="color: var(--text-primary);">${role ? role.title : 'Törölt munkakör'}</strong></p>
@@ -317,7 +322,8 @@ export async function renderEvaluation(container, params = {}) {
             </div>
         </div>
 
-        ${hrScoreHtml}
+        <div id="pdf-content">
+            ${hrScoreHtml}
 
         <!-- AI score card placeholder (filled async) -->
         ${interview.isSelfAssessment ? renderAiLoadingCard() : ''}
@@ -393,7 +399,7 @@ export async function renderEvaluation(container, params = {}) {
             <div class="mt-4 flex justify-end">
                 <button class="btn btn-primary" id="btn-save-eval"><i data-lucide="save"></i> Értékelés mentése</button>
             </div>
-        </div>
+        </div> <!-- end #pdf-content -->
     `;
 
     lucide.createIcons();
@@ -433,7 +439,7 @@ export async function renderEvaluation(container, params = {}) {
 
     // Exit interview link
     document.getElementById('btn-gen-exit')?.addEventListener('click', () => {
-        const user = window.appAuth.getCurrentUser();
+        const user = window.appAuth.getUser();
         const issuedBy     = user ? user.id          : '';
         const issuedByName = user ? user.displayName : '';
         const baseUrl = window.location.origin + window.location.pathname;
@@ -441,6 +447,33 @@ export async function renderEvaluation(container, params = {}) {
         navigator.clipboard.writeText(url).then(() => {
             alert(`Kilépő link vágólapra másolva!\n\nDolgozó: ${interview.candidateName}\nURL: ${url}`);
         }).catch(() => { prompt('Másold ki a linket:', url); });
+    });
+
+    // PDF Export
+    document.getElementById('btn-export-pdf')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btn-export-pdf');
+        const origHtml = btn.innerHTML;
+        btn.innerHTML = '<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Generálás...';
+        btn.disabled = true;
+
+        const element = document.getElementById('pdf-content');
+        const opt = {
+            margin:       10,
+            filename:     `HR_Ertekeles_${interview.candidateName.replace(/\\s+/g, '_')}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        try {
+            await window.html2pdf().set(opt).from(element).save();
+        } catch (e) {
+            console.error("PDF Generate Error", e);
+            alert("Hiba történt a PDF generálása során.");
+        } finally {
+            btn.innerHTML = origHtml;
+            btn.disabled = false;
+        }
     });
 
     // ── AI Analysis ───────────────────────────────────────────────────────────

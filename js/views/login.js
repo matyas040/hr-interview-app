@@ -57,19 +57,38 @@ export function renderLogin(container) {
 
     document.getElementById('btn-login').addEventListener('click', attemptLogin);
 
-    function attemptLogin() {
-        const username = usernameEl.value.trim();
+    async function attemptLogin() {
+        const btn = document.getElementById('btn-login');
+        let username = usernameEl.value.trim();
         const password = passwordEl.value;
-        const user = window.appStore.authenticate(username, password);
+        
+        if (!username || !password) return;
 
-        if (user) {
-            errorEl.style.display = 'none';
-            window.appAuth.setCurrentUser(user);
+        // Auto-append default domain if only username is provided
+        if (!username.includes('@')) {
+            username += '@hr-app.com';
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Belépés...';
+        errorEl.style.display = 'none';
+
+        try {
+            await window.appAuth.login(username, password);
             window.navigateTo('dashboard');
-        } else {
+        } catch (err) {
+            console.error("Login hiba:", err);
             errorEl.style.display = 'block';
+            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                errorEl.innerText = "Hibás email cím vagy jelszó!";
+            } else {
+                errorEl.innerText = "Belépési hiba: " + err.message;
+            }
             passwordEl.value = '';
             passwordEl.focus();
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Bejelentkezés';
         }
     }
 }
