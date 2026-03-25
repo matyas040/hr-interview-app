@@ -5,7 +5,7 @@ import { generateTurnoverReport } from '../services/aiService.js';
  * Shows per-HR stats with drill-down per colleague + AI turnover report.
  */
 export function renderHrStats(container) {
-    const currentUser = window.appAuth.getCurrentUser();
+    const currentUser = window.appAuth.getUser();
     if (!currentUser || currentUser.role !== 'admin') {
         container.innerHTML = `<div class="card" style="max-width:500px; margin: 4rem auto; text-align: center; padding: 2rem;">
             <i data-lucide="shield-off" style="width: 3rem; height: 3rem; color: var(--danger); margin-bottom: 1rem;"></i>
