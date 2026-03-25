@@ -8,6 +8,28 @@ export function renderExitInterview(container, params = {}) {
     let isFinished = false;
     let startTime  = Date.now();
 
+    // Check if already completed
+    const existingInterviews = window.appStore.getInterviews();
+    const alreadyCompleted = existingInterviews.some(i => 
+        i.type === 'exit' && 
+        i.candidateName.toLowerCase() === (employeeName || '').toLowerCase() &&
+        i.issuedBy === issuedBy
+    );
+
+    if (alreadyCompleted) {
+        container.innerHTML = `
+            <div class="card" style="max-width: 560px; margin: 4rem auto; text-align: center; padding: 3rem 2rem;">
+                <div style="width: 4rem; height: 4rem; background: rgba(59, 130, 246, 0.1); color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                    <i data-lucide="check-circle" style="width: 2rem; height: 2rem;"></i>
+                </div>
+                <h2 style="font-size: 1.75rem; font-weight: 600;" class="mb-2">Már kitöltötted</h2>
+                <p style="color: var(--text-secondary);">Ezt a kérdőívet korábban már sikeresen beküldted. További teendőd nincs.</p>
+            </div>
+        `;
+        lucide.createIcons();
+        return;
+    }
+
     const renderForm = () => {
         container.innerHTML = `
             <div style="max-width: 640px; margin: 0 auto; padding-top: 2rem;">
