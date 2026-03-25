@@ -114,6 +114,8 @@ export function renderExitInterview(container, params = {}) {
     };
 
     const renderThankYou = (name) => {
+        const subject = encodeURIComponent(`Új kilépő interjú: ${name}`);
+        const body = encodeURIComponent(`Kedves HR!\n\n${name} sikeresen kitöltötte a kilépő interjút.\nAz eredmények már elérhetőek a HR Interjú Kezelő rendszerben.\n\nÜdvözlettel,\nA Rendszer`);
         container.innerHTML = `
             <div class="card" style="max-width: 560px; margin: 4rem auto; text-align: center; padding: 3rem 2rem;">
                 <div style="width: 4rem; height: 4rem; background: rgba(16, 185, 129, 0.1); color: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
@@ -121,6 +123,11 @@ export function renderExitInterview(container, params = {}) {
                 </div>
                 <h2 style="font-size: 2rem; font-weight: 600;" class="mb-2">Köszönjük, ${name}!</h2>
                 <p style="color: var(--text-secondary); font-size: 1.125rem;">Visszajelzésed sikeresen rögzítettük. Sok sikert a jövőre!</p>
+                <div class="mt-6">
+                    <a href="mailto:?subject=${subject}&body=${body}" class="btn btn-secondary" style="font-size: 0.9rem;">
+                        <i data-lucide="mail"></i> HR értesítése emailben (Opcionális)
+                    </a>
+                </div>
             </div>
         `;
         lucide.createIcons();

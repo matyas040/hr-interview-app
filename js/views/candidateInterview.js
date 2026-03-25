@@ -30,13 +30,20 @@ export function renderCandidateInterview(container, params = {}) {
         window.scrollTo(0, 0);
 
         if (phase === 'done') {
+            const subject = encodeURIComponent(`Új interjú kitöltés: ${candidateName} - ${role.title}`);
+            const body = encodeURIComponent(`Kedves HR!\n\n${candidateName} sikeresen kitöltötte a(z) ${role.title} munkakörhöz tartozó kérdéssort.\nAz eredmények már elérhetőek a HR Interjú Kezelő rendszerben.\n\nÜdvözlettel,\nA Rendszer`);
             container.innerHTML = `
                 <div class="card" style="max-width: 600px; margin: 4rem auto; text-align: center; padding: 3rem 2rem;">
                     <div style="width: 4rem; height: 4rem; background: rgba(16, 185, 129, 0.1); color: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
                         <i data-lucide="check" style="width: 2rem; height: 2rem;"></i>
                     </div>
                     <h2 style="font-size: 2rem; font-weight: 600;" class="mb-2">Köszönjük, ${candidateName}!</h2>
-                    <p style="color: var(--text-secondary); font-size: 1.125rem;">A válaszaidat sikeresen rögzítettük. Az ablakot most már bezárhatod.</p>
+                    <p style="color: var(--text-secondary); font-size: 1.125rem;">A válaszaidat sikeresen rögzítettük és azonnal szinkronizáltuk a HR rendszerrel.</p>
+                    <div class="mt-6">
+                        <a href="mailto:?subject=${subject}&body=${body}" class="btn btn-secondary" style="font-size: 0.9rem;">
+                            <i data-lucide="mail"></i> HR értesítése emailben (Opcionális)
+                        </a>
+                    </div>
                 </div>
             `;
             lucide.createIcons();
