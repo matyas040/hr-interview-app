@@ -71,7 +71,10 @@ class App {
         }
 
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('candidate')) {
+        const isCandidate = urlParams.has('candidate');
+        const isExit = urlParams.has('exit');
+
+        if (isCandidate) {
             const roleId       = urlParams.get('role');
             const candidateName = urlParams.get('name') || 'Jelölt';
             const issuedBy     = urlParams.get('issuedBy') || '';
@@ -82,7 +85,7 @@ class App {
             return;
         }
 
-        if (urlParams.has('exit')) {
+        if (isExit) {
             const employeeName = urlParams.get('name') || '';
             const issuedBy     = urlParams.get('issuedBy') || '';
             const issuedByName = urlParams.get('issuedByName') || '';
@@ -92,7 +95,7 @@ class App {
             return;
         }
 
-        // Guard: require login
+        // Guard: require login for all other routes
         if (!window.appAuth.isLoggedIn()) {
             this.navigate('login');
         } else {
