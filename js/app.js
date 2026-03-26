@@ -1,9 +1,9 @@
-console.log("🚀 app.js v21 loaded");
-import { t, getLang, setLang } from './services/translations.js?v=21';
-import { Store } from './store.js?v=21';
+console.log("🚀 app.js v22 loaded");
+import { t, getLang, setLang } from './services/translations.js?v=22';
+import { Store } from './store.js?v=22';
 import { renderLogin } from './views/login.js?v=14';
 import { renderDashboard } from './views/dashboard.js?v=14';
-import { renderRoleManager } from './views/roleManager.js?v=21';
+import { renderRoleManager } from './views/roleManager.js?v=22';
 import { renderInterviewSetup } from './views/interviewSetup.js?v=14';
 import { renderActiveInterview } from './views/activeInterview.js?v=14';
 import { renderCandidateInterview } from './views/candidateInterview.js?v=14';

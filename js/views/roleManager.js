@@ -289,26 +289,35 @@ export function renderRoleManager(container, params = {}) {
 
             // JD: AI Generate Questions
             document.getElementById('btn-generate-qs')?.addEventListener('click', async () => {
-                if (activeRole.questions.length > 0) {
-                    if (!confirm(t('role.jd_generate_confirm'))) return;
-                }
-                
                 const btn = document.getElementById('btn-generate-qs');
                 const originalHtml = btn.innerHTML;
+                
+                if (!activeRole.jdText && !activeRole.jdPdfBase64) {
+                    alert(getLang() === 'hu' ? "Előbb tölts fel egy munkaköri leírást!" : "Please upload a job description first!");
+                    return;
+                }
+
                 btn.disabled = true;
                 btn.innerHTML = `<i class="spin" data-lucide="loader-2"></i> ${t('role.jd_generating')}`;
-                lucide.createIcons();
+                if (window.lucide) lucide.createIcons();
 
                 try {
+                    console.log("🤖 AI Generation start for role:", activeRole.id);
                     const qs = await generateInterviewQuestions(activeRole.jdText, activeRole.jdPdfBase64);
-                    window.appStore.setRoleQuestions(activeRole.id, qs);
-                    render();
+                    console.log("🤖 AI Generated:", qs.length, "questions");
+                    
+                    if (Array.isArray(qs) && qs.length > 0) {
+                        window.appStore.appendRoleQuestions(activeRole.id, qs);
+                        render();
+                    } else {
+                        throw new Error("Invalid format from AI");
+                    }
                 } catch (err) {
-                    console.error(err);
-                    alert("AI Error: " + err.message);
+                    console.error("❌ AI Generation Error:", err);
+                    alert("AI Error: " + (err.message || "Ismeretlen hiba történt. Ellenőrizd az API kulcsot!"));
                     btn.disabled = false;
                     btn.innerHTML = originalHtml;
-                    lucide.createIcons();
+                    if (window.lucide) lucide.createIcons();
                 }
             });
 

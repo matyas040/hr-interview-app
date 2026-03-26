@@ -171,6 +171,18 @@ export class Store {
         }
     }
 
+    appendRoleQuestions(roleId, questions) {
+        const role = this.getRoleById(roleId);
+        if (role) {
+            const newQs = questions.map(q => ({
+                id: 'q_' + Math.random().toString(36).substr(2, 9),
+                ...q
+            }));
+            role.questions = [...role.questions, ...newQs];
+            setDoc(doc(db, 'roles', role.id), role);
+        }
+    }
+
     updateRolePdf(roleId, pdfBase64, pdfName) {
         const role = this.getRoleById(roleId);
         if (role) {
