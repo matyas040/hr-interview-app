@@ -260,20 +260,20 @@ export async function generateInterviewQuestions(jdText, jdPdfBase64) {
 
     const lang = getLang();
     const prompt = lang === 'hu'
-        ? `Te egy profi HR szakértő vagy. Az alábbi munkaköri leírás alapján generálj 20 releváns, szakmai interjúkérdést.
-A kérdések legyenek változatosak: szakmai tapasztalat, soft skillek, szituációs kérdések.
+        ? `Te egy Senior Technikai Recruiter vagy. Feladatod 20 darab releváns interjúkérdés generálása az alábbi munkakörhöz: "${role.title}".
+TÖREKEDJ A RELEVÁNS SZAKMAI TUDÁSRA: Ne csak a megadott leírást ismételd, hanem hozz be külső szakmai szempontokat is a munkakör neve alapján.
+KÉRÉS: A kérdések legalább 60%-a legyen "rövid, eldöntendő vagy gyorsan megválaszolható" (short), a maradék pedig "kifejtős vagy szituációs" (detailed).
 VÁLASZOLJ MAGYARUL. Adj vissza KIZÁRÓLAG egy JSON tömböt az alábbi formátumban:
 [
   { "text": "Kérdés szövege", "answerType": "short|detailed" }
-]
-(A "short" legyen a rövid, ténybeli kérdéseknek, a "detailed" a kifejtősöknek.)`
-        : `You are a professional HR expert. Based on the following job description, generate 20 relevant, professional interview questions.
-Questions should be varied: professional experience, soft skills, situational questions.
+]`
+        : `You are a Senior Technical Recruiter. Your task is to generate 20 relevant interview questions for the following role: "${activeRole.title}".
+PRIORITIZE 전문 KNOWLEDGE: Don't just parrot the provided description; bring in external professional context based on the job title.
+REQUEST: At least 60% of questions should be "short, direct, or quick-answer" (short), while the rest should be "open-ended or situational" (detailed).
 ANSWER IN ENGLISH. Return ONLY a JSON array in the following format:
 [
   { "text": "Question text", "answerType": "short|detailed" }
-]
-("short" for brief/factual questions, "detailed" for open-ended ones.)`;
+]`;
 
     const parts = [{ text: prompt }];
     if (jdPdfBase64) {

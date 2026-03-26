@@ -9,155 +9,235 @@ export function renderRoleManager(container, params = {}) {
         const activeRole = activeRoleId ? window.appStore.getRoleById(activeRoleId) : null;
 
         container.innerHTML = `
-            <div class="mb-6">
-                <button class="btn btn-secondary mb-4" onclick="window.navigateTo('dashboard')">
-                    <i data-lucide="arrow-left"></i> ${t('role.back')}
-                </button>
-                <div class="flex justify-between items-center">
-                    <h2 style="font-size: 1.5rem; font-weight: 600;">${t('role.title')}</h2>
-                    <button class="btn btn-primary" id="btn-add-role">
-                        <i data-lucide="plus"></i> ${t('role.add_new')}
-                    </button>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 2rem; align-items: flex-start;">
-                <!-- Sidebar: Roles List -->
-                <div class="card" style="flex: 0 0 300px; padding: 1rem;">
-                    <h3 class="mb-4" style="font-size: 1rem; font-weight: 600; padding: 0 0.5rem;">${t('role.list_title')}</h3>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        ${roles.map(r => `
-                            <button 
-                                class="role-item ${r.id === activeRoleId ? 'active' : ''}" 
-                                style="text-align: left; padding: 0.75rem 1rem; border-radius: var(--radius-md); background: ${r.id === activeRoleId ? 'var(--bg-primary)' : 'transparent'}; border: 1px solid ${r.id === activeRoleId ? 'var(--border-color)' : 'transparent'}; width: 100%; transition: all 0.2s;"
-                                data-id="${r.id}"
-                            >
-                                <div style="font-weight: ${r.id === activeRoleId ? '600' : '400'}; color: ${r.id === activeRoleId ? 'var(--accent)' : 'var(--text-primary)'};">${r.title}</div>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary);">${r.questions.length} ${getLang() === 'hu' ? 'kérdés' : 'questions'}${r.pdfName ? ' · 📎 PDF' : ''}</div>
-                            </button>
-                        `).join('')}
-                        ${roles.length === 0 ? `<p style="color: var(--text-secondary); padding: 1rem;">${t('role.no_roles')}</p>` : ''}
+            <div class="role-manager-layout">
+                <!-- Sidebar -->
+                <aside class="role-sidebar card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em;">${t('role.list_title')}</h2>
+                        <button class="btn-icon btn-add-circle" id="btn-add-role" title="${t('role.add_new')}">
+                            <i data-lucide="plus"></i>
+                        </button>
                     </div>
-                </div>
+                    
+                    <div class="role-list">
+                        ${roles.map(r => `
+                            <div class="role-card ${r.id === activeRoleId ? 'active' : ''}" data-id="${r.id}">
+                                <div class="role-card-info">
+                                    <span class="role-card-title">${r.title}</span>
+                                    <span class="role-card-meta">${r.questions.length} ${getLang() === 'hu' ? 'kérdés' : 'questions'}</span>
+                                </div>
+                                ${r.pdfName || r.jdFileName ? '<i data-lucide="paperclip" class="role-card-icon"></i>' : ''}
+                            </div>
+                        `).join('')}
+                        ${roles.length === 0 ? `<div class="empty-state-small">${t('role.no_roles')}</div>` : ''}
+                    </div>
+                </aside>
 
-                <!-- Main: Role Editor -->
-                <div style="flex: 1;">
+                <!-- Content Area -->
+                <main class="role-main">
                     ${activeRole ? `
-                        <div class="card mb-4">
-                            <div class="form-group mb-0 flex gap-2">
-                                <input type="text" id="role-title-input" class="form-input" value="${activeRole.title}" style="flex: 1; font-size: 1.25rem; font-weight: 600;">
-                                <button class="btn btn-success" id="btn-save-role">${t('role.save')}</button>
-                                <button class="btn btn-danger" id="btn-delete-role"><i data-lucide="trash-2"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="card mb-4">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 style="font-size: 1.125rem; font-weight: 500;">${t('role.questions')} (${activeRole.questions.length})</h3>
-                            </div>
-                            
-                            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;" id="questions-list">
-                                ${activeRole.questions.map((q, index) => `
-                                    <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                                        <div style="background: var(--bg-primary); width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--border-color); flex-shrink: 0; margin-top: 0.5rem;">${index + 1}</div>
-                                        <input type="text" class="form-input q-input" data-qid="${q.id}" value="${q.text}" style="flex: 1;">
-                                        <select class="form-input q-type-select" data-qid="${q.id}" style="width: auto; min-width: 130px; font-size: 0.82rem; margin-top: 0;" title="Válasz típusa">
-                                            <option value="short" ${(q.answerType || 'detailed') === 'short' ? 'selected' : ''}>⚡ ${getLang() === 'hu' ? 'Rövid' : 'Short'}</option>
-                                            <option value="detailed" ${(q.answerType || 'detailed') === 'detailed' ? 'selected' : ''}>📝 ${getLang() === 'hu' ? 'Részletes' : 'Detailed'}</option>
-                                        </select>
-                                        <button class="btn btn-icon btn-danger-text btn-del-q" data-qid="${q.id}" style="margin-top: 0.25rem;"><i data-lucide="x"></i></button>
-                                    </div>
-                                `).join('')}
-                                ${activeRole.questions.length === 0 ? `<p style="color: var(--text-secondary);">${t('role.no_questions')}</p>` : ''}
-                            </div>
-
-                            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-                                <input type="text" id="new-q-input" class="form-input" placeholder="${t('role.q_placeholder')}" style="flex: 1; min-width: 200px;">
-                                <select id="new-q-type" class="form-input" style="width: auto; min-width: 140px; font-size: 0.85rem;">
-                                    <option value="detailed">📝 ${getLang() === 'hu' ? 'Részletes válasz' : 'Detailed answer'}</option>
-                                    <option value="short">⚡ ${getLang() === 'hu' ? 'Rövid válasz' : 'Short answer'}</option>
-                                </select>
-                                <button class="btn btn-primary" id="btn-add-q"><i data-lucide="plus"></i> ${t('role.add_q')}</button>
-                            </div>
-                        </div>
-
-                        <!-- Job Description Section (for AI) -->
-                        <div class="card mb-4">
-                            <h3 style="font-size: 1.125rem; font-weight: 500; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <i data-lucide="brain-circuit" style="width: 1rem; color: #8b5cf6;"></i> ${t('role.jd_title')}
-                                <span style="font-size: 0.7rem; background: rgba(139,92,246,0.12); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3); border-radius: 1rem; padding: 0.15rem 0.55rem; font-weight: 700;">${t('role.jd_ai_badge')}</span>
-                            </h3>
-                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.25rem;">
-                                ${t('role.jd_subtitle')}
-                            </p>
-                            ${activeRole.jdFileName ? `
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.875rem 1rem; background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.2); border-radius: var(--radius-md); margin-bottom: 1rem;">
-                                    <div style="display: flex; align-items: center; gap: 1rem;">
-                                        <i data-lucide="file-badge" style="width: 1.5rem; color: #8b5cf6; flex-shrink: 0;"></i>
-                                        <div>
-                                            <div style="font-weight: 500;">${activeRole.jdFileName}</div>
-                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${t('role.jd_title')}</div>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-danger" id="btn-remove-jd" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                        <header class="role-header card mb-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4 flex-1">
+                                    <button class="btn-icon" onclick="window.navigateTo('dashboard')">
+                                        <i data-lucide="chevron-left"></i>
+                                    </button>
+                                    <input type="text" id="role-title-input" class="role-title-field" value="${activeRole.title}">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="btn btn-primary" id="btn-save-role">
+                                        <i data-lucide="check"></i> ${t('role.save')}
+                                    </button>
+                                    <button class="btn btn-secondary btn-danger-hover" id="btn-delete-role">
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 </div>
-                                <button class="btn btn-primary w-full" id="btn-generate-qs" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none; font-weight: 600; padding: 0.75rem;">
-                                   <i data-lucide="sparkles"></i> ${t('role.jd_generate')}
-                                </button>
-                            ` : `
-                                <label class="btn btn-secondary" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
-                                    <i data-lucide="upload"></i> ${t('role.jd_upload')}
-                                    <input type="file" accept=".pdf,.txt,.docx" id="jd-upload-input" style="display: none;">
-                                </label>
-                            `}
-                            <div id="jd-upload-status" style="margin-top: 0.5rem; font-size: 0.875rem;"></div>
-                        </div>
-
-                        <!-- PDF Attachment Section (candidate reading material) -->
-                        <div class="card">
-                            <h3 style="font-size: 1.125rem; font-weight: 500; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <i data-lucide="file-text" style="width: 1rem; color: var(--accent);"></i> ${t('role.attachment_title')}
-                            </h3>
-                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.25rem;">
-                                ${t('role.attachment_subtitle')}
-                            </p>
-                            ${activeRole.pdfName ? `
-                            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.875rem 1rem; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: var(--radius-md); margin-bottom: 1rem;">
-                                <i data-lucide="file-text" style="width: 1.5rem; color: var(--accent); flex-shrink: 0;"></i>
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${activeRole.pdfName}</div>
-                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">${getLang() === 'hu' ? 'Csatolt dokumentum' : 'Attached document'}</div>
-                                </div>
-                                <button class="btn btn-secondary" id="btn-preview-pdf" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
-                                    <i data-lucide="eye"></i> ${t('role.pdf_preview')}
-                                </button>
-                                <button class="btn btn-danger" id="btn-remove-pdf" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
-                                    <i data-lucide="trash-2" style="width: 1rem;"></i>
-                                </button>
                             </div>
-                            ` : ''}
-                            <label class="btn btn-secondary" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
-                                <i data-lucide="upload"></i> ${activeRole.pdfName ? t('role.pdf_replace') : t('role.pdf_upload')}
-                                <input type="file" accept=".pdf" id="pdf-upload-input" style="display: none;">
-                            </label>
-                            <div id="pdf-upload-status" style="margin-top: 0.5rem; font-size: 0.875rem;"></div>
-                        </div>
+                        </header>
 
+                        <!-- Two Column Actions & Questions -->
+                        <div class="role-content-grid">
+                            <!-- Left: Questions List -->
+                            <section class="card question-section">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 style="font-size: 1rem; font-weight: 500;">${t('role.questions')}</h3>
+                                    <span class="badge">${activeRole.questions.length}</span>
+                                </div>
+
+                                <div class="questions-scroll-area">
+                                    <div id="questions-list" class="questions-compact-list">
+                                        ${activeRole.questions.map((q, index) => `
+                                            <div class="q-row">
+                                                <div class="q-number">${index + 1}</div>
+                                                <div class="q-content">
+                                                    <input type="text" class="q-text-input q-input" data-qid="${q.id}" value="${q.text}">
+                                                    <div class="q-actions">
+                                                        <select class="q-type-select q-type-minimal" data-qid="${q.id}">
+                                                            <option value="short" ${(q.answerType || 'detailed') === 'short' ? 'selected' : ''}>⚡ ${getLang() === 'hu' ? 'Rövid' : 'Short'}</option>
+                                                            <option value="detailed" ${(q.answerType || 'detailed') === 'detailed' ? 'selected' : ''}>📝 ${getLang() === 'hu' ? 'Részletes' : 'Detailed'}</option>
+                                                        </select>
+                                                        <button class="btn-icon btn-del-q" data-qid="${q.id}"><i data-lucide="x"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                        ${activeRole.questions.length === 0 ? `<div class="empty-state-small">${t('role.no_questions')}</div>` : ''}
+                                    </div>
+                                </div>
+
+                                <div class="add-q-container mt-6">
+                                    <input type="text" id="new-q-input" class="form-input-minimal" placeholder="${t('role.q_placeholder')}">
+                                    <button class="btn-add-square" id="btn-add-q"><i data-lucide="plus"></i></button>
+                                </div>
+                            </section>
+
+                            <!-- Right: Role Assets (JD & PDF) -->
+                            <div class="role-assets">
+                                <!-- AI Section -->
+                                <section class="card ai-card mb-4 highlight-border">
+                                    <div class="ai-header mb-4">
+                                        <div class="flex items-center gap-2">
+                                            <div class="ai-icon-bg"><i data-lucide="sparkles"></i></div>
+                                            <div>
+                                                <h4 style="font-size: 0.9rem; font-weight: 600;">${t('role.jd_title')}</h4>
+                                                <p style="font-size: 0.75rem; color: var(--text-secondary);">${t('role.jd_subtitle')}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    ${activeRole.jdFileName ? `
+                                        <div class="file-pill ai-file mb-4">
+                                            <i data-lucide="file-text"></i>
+                                            <span class="file-name">${activeRole.jdFileName}</span>
+                                            <button class="btn-icon-small" id="btn-remove-jd"><i data-lucide="x"></i></button>
+                                        </div>
+                                        <button class="btn btn-ai w-full" id="btn-generate-qs">
+                                            <i data-lucide="wand-2"></i> ${t('role.jd_generate')}
+                                        </button>
+                                    ` : `
+                                        <label class="upload-dropzone">
+                                            <i data-lucide="upload-cloud"></i>
+                                            <span>${t('role.jd_upload')}</span>
+                                            <input type="file" accept=".pdf,.txt,.docx" id="jd-upload-input" hidden>
+                                        </label>
+                                    `}
+                                    <div id="jd-upload-status" class="status-msg"></div>
+                                </section>
+
+                                <!-- PDF Section -->
+                                <section class="card">
+                                    <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem;">${t('role.attachment_title')}</h4>
+                                    ${activeRole.pdfName ? `
+                                        <div class="file-pill mb-4">
+                                            <i data-lucide="book-open"></i>
+                                            <span class="file-name">${activeRole.pdfName}</span>
+                                            <button class="btn-icon-small" id="btn-preview-pdf"><i data-lucide="external-link"></i></button>
+                                            <button class="btn-icon-small" id="btn-remove-pdf"><i data-lucide="trash-2"></i></button>
+                                        </div>
+                                    ` : `
+                                        <label class="btn btn-secondary w-full" style="cursor: pointer;">
+                                            <i data-lucide="upload"></i> ${t('role.pdf_upload')}
+                                            <input type="file" accept=".pdf" id="pdf-upload-input" hidden>
+                                        </label>
+                                    `}
+                                    <div id="pdf-upload-status" class="status-msg"></div>
+                                </section>
+                            </div>
+                        </div>
                     ` : `
-                        <div class="card flex flex-col items-center justify-center text-center" style="min-height: 300px;">
-                            <i data-lucide="file-question" style="width: 3rem; height: 3rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
-                            <h3 style="font-size: 1.25rem; font-weight: 500;" class="mb-2">${t('role.select_role')}</h3>
-                            <p style="color: var(--text-secondary);">${t('role.select_role_subtitle')}</p>
+                        <div class="empty-state-full card">
+                            <div class="empty-icon-lg"><i data-lucide="briefcase"></i></div>
+                            <h3>${t('role.select_role')}</h3>
+                            <p>${t('role.select_role_subtitle')}</p>
+                            <button class="btn btn-primary mt-6" id="btn-add-role-empty"><i data-lucide="plus"></i> ${t('role.add_new')}</button>
                         </div>
                     `}
-                </div>
+                </main>
             </div>
+
             <style>
-                .role-item:hover { background-color: var(--bg-primary) !important; }
-                .btn-danger-text { color: var(--danger); }
-                .btn-danger-text:hover { background-color: rgba(239, 68, 68, 0.1); }
+                .role-manager-layout { display: flex; gap: 2rem; align-items: flex-start; min-height: 80vh; }
+                .role-sidebar { width: 300px; flex-shrink: 0; position: sticky; top: 100px; padding: 1.5rem; height: fit-content; }
+                .role-main { flex: 1; min-width: 0; }
+                
+                /* Sidebar List */
+                .role-list { display: flex; flex-direction: column; gap: 0.5rem; }
+                .role-card { 
+                    padding: 1rem; border-radius: 12px; border: 1px solid transparent; cursor: pointer;
+                    display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;
+                    background: rgba(255,255,255,0.03);
+                }
+                .role-card:hover { background: var(--bg-primary); border-color: var(--border-color); }
+                .role-card.active { 
+                    background: var(--bg-secondary); border-color: var(--accent);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                .role-card-title { display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.15rem; }
+                .role-card-meta { font-size: 0.75rem; color: var(--text-secondary); }
+                .role-card-icon { width: 1rem; color: var(--accent); opacity: 0.7; }
+
+                /* Header Area */
+                .role-header { padding: 1.25rem 1.75rem; }
+                .role-title-field { 
+                    background: transparent; border: none; font-size: 1.35rem; font-weight: 700; 
+                    color: var(--text-primary); width: 100%; outline: none;
+                }
+                
+                /* Grid Content */
+                .role-content-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; }
+                
+                /* Question Rows */
+                .questions-compact-list { display: flex; flex-direction: column; gap: 0.75rem; }
+                .q-row { 
+                    display: flex; gap: 1rem; align-items: flex-start; padding: 0.75rem; 
+                    border-radius: 12px; transition: background 0.2s;
+                }
+                .q-row:hover { background: rgba(0,0,0,0.02); }
+                [data-theme="dark"] .q-row:hover { background: rgba(255,255,255,0.02); }
+                
+                .q-number { width: 24px; height: 24px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-top: 8px; flex-shrink: 0; }
+                .q-content { flex: 1; min-width: 0; }
+                .q-text-input { background: transparent; border: none; border-bottom: 1px solid transparent; width: 100%; padding: 4px 0; font-size: 0.95rem; color: var(--text-primary); outline: none; transition: border-color 0.2s; }
+                .q-text-input:focus { border-color: var(--accent); }
+                .q-actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 4px; opacity: 0; transition: opacity 0.2s; }
+                .q-row:hover .q-actions { opacity: 1; }
+                
+                .q-type-minimal { background: transparent; border: none; font-size: 0.7rem; color: var(--text-secondary); outline: none; cursor: pointer; padding: 2px 4px; }
+                .q-type-minimal:hover { color: var(--accent); }
+                
+                .add-q-container { display: flex; gap: 0.5rem; background: var(--bg-primary); border: 1px dotted var(--border-color); padding: 6px; border-radius: 12px; }
+                .form-input-minimal { flex: 1; background: transparent; border: none; padding: 0.5rem; font-size: 0.875rem; outline: none; }
+                .btn-add-square { width: 34px; height: 34px; background: var(--accent); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+                .btn-add-square:hover { transform: scale(1.05); }
+
+                /* AI Card Special */
+                .highlight-border { border: 1.5px solid rgba(139,92,246,0.2); }
+                .ai-icon-bg { width: 32px; height: 32px; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+                .btn-ai { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; box-shadow: 0 4px 12px rgba(139,92,246,0.3); font-weight: 600; }
+                .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(139,92,246,0.4); }
+                
+                /* File Pills */
+                .file-pill { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--bg-primary); border-radius: 10px; border: 1px solid var(--border-color); }
+                .file-name { flex: 1; font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .btn-icon-small { padding: 4px; border-radius: 4px; color: var(--text-secondary); transition: all 0.2s; }
+                .btn-icon-small:hover { background: rgba(0,0,0,0.05); color: var(--danger); }
+                
+                /* Dropzone */
+                .upload-dropzone { 
+                    display: flex; flex-direction: column; align-items: center; gap: 0.5rem; 
+                    padding: 1.5rem; border: 2px dashed var(--border-color); border-radius: 12px; 
+                    cursor: pointer; transition: all 0.2s; color: var(--text-secondary);
+                }
+                .upload-dropzone:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+                
+                /* Empty States */
+                .empty-state-full { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; }
+                .empty-icon-lg { font-size: 3rem; color: var(--accent-soft); margin-bottom: 1.5rem; }
+                .empty-state-small { padding: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; font-style: italic; }
+                .badge { font-size: 0.7rem; background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 12px; font-weight: 700; }
+
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .spin { animation: spin 1s linear infinite; }
                 .w-full { width: 100%; }
             </style>
         `;
@@ -167,8 +247,8 @@ export function renderRoleManager(container, params = {}) {
     };
 
     const attachEvents = (activeRole) => {
-        // Switch role
-        container.querySelectorAll('.role-item').forEach(el => {
+        // Switch role (now using the card class)
+        container.querySelectorAll('.role-card').forEach(el => {
             el.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
                 params.roleId = id;
@@ -181,6 +261,9 @@ export function renderRoleManager(container, params = {}) {
             const newRole = window.appStore.addRole(getLang() === 'hu' ? 'Új Munkakör' : 'New Role');
             params.roleId = newRole.id;
             render();
+        });
+        document.getElementById('btn-add-role-empty')?.addEventListener('click', () => {
+            document.getElementById('btn-add-role').click();
         });
 
         if (activeRole) {
@@ -232,9 +315,8 @@ export function renderRoleManager(container, params = {}) {
             // Add new question
             document.getElementById('btn-add-q')?.addEventListener('click', () => {
                 const val  = document.getElementById('new-q-input').value.trim();
-                const type = document.getElementById('new-q-type').value;
                 if (val) {
-                    window.appStore.addQuestion(activeRole.id, val, type);
+                    window.appStore.addQuestion(activeRole.id, val, 'detailed');
                     render();
                 }
             });
@@ -242,12 +324,12 @@ export function renderRoleManager(container, params = {}) {
                 if (e.key === 'Enter') document.getElementById('btn-add-q')?.click();
             });
 
-            // JD: file upload (PDF or TXT or Word)
+            // JD: file upload
             document.getElementById('jd-upload-input')?.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
                 const statusEl = document.getElementById('jd-upload-status');
-                statusEl.innerHTML = `<span style="color: var(--text-secondary);">⏳ ${t('role.uploading')}</span>`;
+                statusEl.innerHTML = `<span style="color: var(--text-secondary); font-size: 0.75rem;">⏳ ${t('role.uploading')}</span>`;
                 
                 const isPdf = file.name.toLowerCase().endsWith('.pdf');
                 const isDocx = file.name.toLowerCase().endsWith('.docx');
@@ -264,16 +346,11 @@ export function renderRoleManager(container, params = {}) {
                         } else {
                             window.appStore.updateRoleJobDesc(activeRole.id, { jdText: reader.result, jdFileName: file.name, jdPdfBase64: null });
                         }
-                        statusEl.innerHTML = `<span style="color: var(--success);">✓ ${file.name} ${t('role.upload_success')}</span>`;
-                        setTimeout(() => render(), 800);
+                        render();
                     } catch (err) {
-                        statusEl.innerHTML = `<span style="color: var(--danger);">✗ ${t('role.upload_error')}</span>`;
+                        statusEl.innerHTML = `<span style="color: var(--danger); font-size: 0.75rem;">✗ ${t('role.upload_error')}</span>`;
                     }
                 };
-                reader.onerror = () => {
-                    statusEl.innerHTML = `<span style="color: var(--danger);">✗ ${t('role.upload_error')}</span>`;
-                };
-
                 if (isPdf) reader.readAsDataURL(file);
                 else if (isDocx) reader.readAsArrayBuffer(file);
                 else reader.readAsText(file);
@@ -302,19 +379,13 @@ export function renderRoleManager(container, params = {}) {
                 if (window.lucide) lucide.createIcons();
 
                 try {
-                    console.log("🤖 AI Generation start for role:", activeRole.id);
-                    const qs = await generateInterviewQuestions(activeRole.jdText, activeRole.jdPdfBase64);
-                    console.log("🤖 AI Generated:", qs.length, "questions");
-                    
+                    const qs = await generateInterviewQuestions(activeRole.jdText, activeRole.jdPdfBase64, activeRole);
                     if (Array.isArray(qs) && qs.length > 0) {
                         window.appStore.appendRoleQuestions(activeRole.id, qs);
                         render();
-                    } else {
-                        throw new Error("Invalid format from AI");
-                    }
+                    } else { throw new Error("Format error"); }
                 } catch (err) {
-                    console.error("❌ AI Generation Error:", err);
-                    alert("AI Error: " + (err.message || "Ismeretlen hiba történt. Ellenőrizd az API kulcsot!"));
+                    alert("AI Error: " + (err.message || "Failed"));
                     btn.disabled = false;
                     btn.innerHTML = originalHtml;
                     if (window.lucide) lucide.createIcons();
@@ -326,34 +397,28 @@ export function renderRoleManager(container, params = {}) {
                 const file = e.target.files[0];
                 if (!file) return;
                 const statusEl = document.getElementById('pdf-upload-status');
-                statusEl.innerHTML = `<span style="color: var(--text-secondary);">⏳ ${t('role.uploading')}</span>`;
+                statusEl.innerHTML = `<span style="color: var(--text-secondary); font-size: 0.8rem;">⏳ ${t('role.uploading')}</span>`;
                 const reader = new FileReader();
                 reader.onload = () => {
                     const base64 = reader.result.split(',')[1];
                     window.appStore.updateRolePdf(activeRole.id, base64, file.name);
-                    statusEl.innerHTML = `<span style="color: var(--success);">✓ ${file.name} ${getLang() === 'hu' ? 'sikeresen csatolva.' : 'successfully attached.'}</span>`;
-                    setTimeout(() => render(), 800);
-                };
-                reader.onerror = () => {
-                    statusEl.innerHTML = `<span style="color: var(--danger);">✗ ${t('role.upload_error')}</span>`;
+                    render();
                 };
                 reader.readAsDataURL(file);
             });
 
-            // PDF: remove
-            document.getElementById('btn-remove-pdf')?.addEventListener('click', () => {
-                if (confirm(t('role.remove_pdf_confirm'))) {
-                    window.appStore.clearRolePdf(activeRole.id);
-                    render();
-                }
-            });
-
-            // PDF: preview in new tab
             document.getElementById('btn-preview-pdf')?.addEventListener('click', () => {
                 const role = window.appStore.getRoleById(activeRole.id);
                 if (role?.pdfBase64) {
                     const url = `data:application/pdf;base64,${role.pdfBase64}`;
                     window.open(url, '_blank');
+                }
+            });
+
+            document.getElementById('btn-remove-pdf')?.addEventListener('click', () => {
+                if (confirm(t('role.remove_pdf_confirm'))) {
+                    window.appStore.clearRolePdf(activeRole.id);
+                    render();
                 }
             });
         }
