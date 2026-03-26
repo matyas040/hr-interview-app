@@ -1,13 +1,13 @@
-import { t, getLang, setLang } from './services/translations.js?v=27';
-import { Store } from './store.js?v=27';
-import { renderLogin } from './views/login.js?v=27';
-import { renderDashboard } from './views/dashboard.js?v=27';
-import { renderRoleManager } from './views/roleManager.js?v=27';
-import { renderInterviewSetup } from './views/interviewSetup.js?v=27';
-import { renderActiveInterview } from './views/activeInterview.js?v=27';
-import { renderCandidateInterview } from './views/candidateInterview.js?v=27';
-import { renderEvaluation } from './views/evaluation.js?v=27';
-import { renderAdminPanel } from './views/adminPanel.js?v=27';
+import { t, getLang, setLang } from './services/translations.js?v=28';
+import { Store } from './store.js?v=28';
+import { renderLogin } from './views/login.js?v=28';
+import { renderDashboard } from './views/dashboard.js?v=28';
+import { renderRoleManager } from './views/roleManager.js?v=28';
+import { renderInterviewSetup } from './views/interviewSetup.js?v=28';
+import { renderActiveInterview } from './views/activeInterview.js?v=28';
+import { renderCandidateInterview } from './views/candidateInterview.js?v=28';
+import { renderEvaluation } from './views/evaluation.js?v=28';
+import { renderAdminPanel } from './views/adminPanel.js?v=28';
 import { renderExitInterview } from './views/exitInterview.js?v=14';
 import { renderHrStats } from './views/hrStats.js?v=14';
 
