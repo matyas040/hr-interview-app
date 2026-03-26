@@ -241,7 +241,17 @@ export const translations = {
         'stats.questionnaire': 'Kérdőív',
         'stats.why_exited': 'AI elemzés – miért mentek el?',
         'stats.ai_thinking_colleague': 'Az AI elemzi a kilépési adatait…',
-    },
+ 
+         // Rejection Manager
+         'rejection.title': 'Tömeges Elutasítás Kezelő',
+         'rejection.subtitle': 'Értesíts mindenkit, akit nem választottál be, egyedi AI levéllel.',
+         'rejection.no_pending': 'Mindenki értesítve lett!',
+         'rejection.ai_draft': 'AI Tervezet',
+         'rejection.mark_sent': 'Kész (manuális)',
+         'rejection.copy': 'Másolás',
+         'rejection.open_mail': 'Megnyitás Levelezőben',
+         'rejection.ai_thinking': 'AI dolgozik...',
+     },
     en: {
         // App Header & Common
         'app.title': 'HR Interview Manager',
@@ -471,8 +481,18 @@ export const translations = {
         'stats.questionnaire': 'Questionnaire',
         'stats.why_exited': 'AI analysis – why did they leave?',
         'stats.ai_thinking_colleague': 'AI is analyzing their exit data…',
-    }
-};
+ 
+         // Rejection Manager
+         'rejection.title': 'Bulk Rejection Manager',
+         'rejection.subtitle': 'Notify everyone who wasn\'t selected with a custom AI letter.',
+         'rejection.no_pending': 'All candidates have been notified!',
+         'rejection.ai_draft': 'AI Draft',
+         'rejection.mark_sent': 'Mark Sent (manual)',
+         'rejection.copy': 'Copy',
+         'rejection.open_mail': 'Open in Mail',
+         'rejection.ai_thinking': 'AI thinking...',
+     }
+ };
 
 let currentLang = localStorage.getItem('hr_lang') || 'hu';
 
