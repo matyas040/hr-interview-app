@@ -1,4 +1,4 @@
-import { t } from '../services/translations.js?v=34';
+import { t } from '../services/translations.js?v=35';
 
 export function renderActiveInterview(container, params = {}) {
     const { roleId, candidateName, date } = params;
@@ -61,7 +61,7 @@ export function renderActiveInterview(container, params = {}) {
             container.innerHTML = `
                 <div style="max-width: 640px; margin: 0 auto; padding-top: 2rem;">
                     <div style="text-align: center; margin-bottom: 2.5rem;">
-                        <h2 style="font-size: 1.75rem; font-weight: 600;">${t('admin.modal.title_new')}: ${candidateName}</h2>
+                        <h2 style="font-size: 1.75rem; font-weight: 600;">${getLang()==='hu'?'Interjú indítása':'Start Interview'}: ${candidateName}</h2>
                         <p style="color: var(--text-secondary); margin-top: 0.5rem;">${t('admin.table.role').split(' /')[0]}: <strong style="color: var(--text-primary);">${role.title}</strong></p>
                     </div>
 

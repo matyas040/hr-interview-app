@@ -2,7 +2,7 @@
  * Exit Interview — dynamic form for departing employees.
  * Fetches questions from store.js (Firestore).
  */
-import { t, getLang } from '../services/translations.js?v=34';
+import { t, getLang } from '../services/translations.js?v=35';
 
 export function renderExitInterview(container, params = {}) {
     const { employeeName, issuedBy, issuedByName } = params;

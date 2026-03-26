@@ -1,4 +1,4 @@
-import { t, getLang } from '../services/translations.js?v=34';
+import { t, getLang } from '../services/translations.js?v=35';
 
 export function renderDashboard(container) {
     const roles = window.appStore.getRoles();
@@ -66,7 +66,9 @@ export function renderDashboard(container) {
                                     </div>
                                     <div>
                                         <h4 style="font-weight: 500;">${inv.candidateName}</h4>
-                                        <p style="color: var(--text-secondary); font-size: 0.875rem;">${roleTitle}</p>
+                                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                                            ${roleTitle} ${inv.issuedByName ? `<span style="opacity: 0.6; margin-left: 0.5rem;">· <i data-lucide="user" style="width: 0.75rem; vertical-align: middle;"></i> ${inv.issuedByName}</span>` : ''}
+                                        </p>
                                     </div>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 1rem;">

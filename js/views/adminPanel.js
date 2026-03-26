@@ -1,4 +1,4 @@
-import { t, getLang } from '../services/translations.js?v=34';
+import { t, getLang } from '../services/translations.js?v=35';
 
 export function renderAdminPanel(container) {
     const currentUser = window.appAuth.getUser();

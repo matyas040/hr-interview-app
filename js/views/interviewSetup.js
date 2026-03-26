@@ -1,4 +1,4 @@
-import { t, getLang } from '../services/translations.js?v=34';
+import { t, getLang } from '../services/translations.js?v=35';
 
 export function renderInterviewSetup(container, params = {}) {
     const roleId = params.roleId;
