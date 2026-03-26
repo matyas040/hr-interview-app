@@ -1,10 +1,8 @@
-import { t, getLang } from '../services/translations.js?v=32';
+import { t, getLang } from '../services/translations.js?v=34';
 
 export function renderDashboard(container) {
     const roles = window.appStore.getRoles();
     const interviews = window.appStore.getInterviews();
-
-    const pendingCount = interviews.filter(i => i.hireStatus === 'rejected' && (!i.emailSent || i.emailSent === 'pending')).length;
 
     container.innerHTML = `
         <div class="flex justify-between items-center mb-6">
@@ -12,18 +10,9 @@ export function renderDashboard(container) {
                 <h2 style="font-size: 1.5rem; font-weight: 600;">${t('dashboard.title')}</h2>
                 <p style="color: var(--text-secondary);" class="mt-1">${t('dashboard.subtitle')}</p>
             </div>
-            <div style="display: flex; gap: 1rem;">
-                ${pendingCount > 0 ? `
-                    <button class="btn btn-warning" onclick="window.navigateTo('rejectionManager')" style="position: relative;">
-                        <i data-lucide="mail"></i> 
-                        ${getLang() === 'hu' ? 'Váró értesítések' : 'Pending Notifications'}
-                        <span style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-primary);">${pendingCount}</span>
-                    </button>
-                ` : ''}
-                <button class="btn btn-secondary" onclick="window.navigateTo('roleManager')">
-                    <i data-lucide="settings"></i> ${t('dashboard.manage_roles')}
-                </button>
-            </div>
+            <button class="btn btn-secondary" onclick="window.navigateTo('roleManager')">
+                <i data-lucide="settings"></i> ${t('dashboard.manage_roles')}
+            </button>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;" class="mb-6">

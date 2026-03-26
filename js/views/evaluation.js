@@ -1,4 +1,4 @@
-import { t, getLang } from '../services/translations.js?v=32';
+import { t, getLang } from '../services/translations.js?v=34';
 import { analyzeInterview, getApiKey } from '../services/aiService.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

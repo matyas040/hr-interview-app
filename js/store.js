@@ -375,18 +375,4 @@ export class Store {
     getAuth() {
         return auth;
     }
-
-    async updateInterviewEmailStatus(interviewId, status) {
-        const interviewRef = doc(db, 'interviews', interviewId);
-        await updateDoc(interviewRef, {
-            emailSent: status
-        });
-        
-        // Update local state
-        const idx = this.interviews.findIndex(i => i.id === interviewId);
-        if (idx !== -1) {
-            this.interviews[idx].emailSent = status;
-            this.notify();
-        }
-    }
 }

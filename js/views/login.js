@@ -1,4 +1,4 @@
-import { t } from '../services/translations.js?v=32';
+import { t } from '../services/translations.js?v=34';
 
 export function renderLogin(container) {
     container.innerHTML = `

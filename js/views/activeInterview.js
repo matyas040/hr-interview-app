@@ -1,4 +1,4 @@
-import { t } from '../services/translations.js?v=32';
+import { t } from '../services/translations.js?v=34';
 
 export function renderActiveInterview(container, params = {}) {
     const { roleId, candidateName, date } = params;
@@ -261,8 +261,8 @@ export function renderActiveInterview(container, params = {}) {
                 personalData,
                 answers,
                 isSelfAssessment: false,
-                issuedBy: window.appAuth.getUser().id || '',
-                issuedByName: window.appAuth.getUser().displayName || ''
+                issuedBy: window.appAuth.getUser()?.id || '',
+                issuedByName: window.appAuth.getUser()?.displayName || ''
             });
             
             // Navigate to dashboard

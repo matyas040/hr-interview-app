@@ -1,16 +1,15 @@
-import { t, getLang, setLang } from './services/translations.js?v=32';
-import { Store } from './store.js?v=32';
-import { renderLogin } from './views/login.js?v=32';
-import { renderDashboard } from './views/dashboard.js?v=32';
-import { renderRoleManager } from './views/roleManager.js?v=32';
-import { renderInterviewSetup } from './views/interviewSetup.js?v=32';
-import { renderActiveInterview } from './views/activeInterview.js?v=32';
-import { renderCandidateInterview } from './views/candidateInterview.js?v=32';
-import { renderEvaluation } from './views/evaluation.js?v=32';
-import { renderAdminPanel } from './views/adminPanel.js?v=32';
-import { renderExitInterview } from './views/exitInterview.js?v=32';
-import { renderHrStats } from './views/hrStats.js?v=32';
-import { renderRejectionManager } from './views/rejectionManager.js?v=32';
+import { t, getLang, setLang } from './services/translations.js?v=34';
+import { Store } from './store.js?v=34';
+import { renderLogin } from './views/login.js?v=34';
+import { renderDashboard } from './views/dashboard.js?v=34';
+import { renderRoleManager } from './views/roleManager.js?v=34';
+import { renderInterviewSetup } from './views/interviewSetup.js?v=34';
+import { renderActiveInterview } from './views/activeInterview.js?v=34';
+import { renderCandidateInterview } from './views/candidateInterview.js?v=34';
+import { renderEvaluation } from './views/evaluation.js?v=34';
+import { renderAdminPanel } from './views/adminPanel.js?v=34';
+import { renderExitInterview } from './views/exitInterview.js?v=34';
+import { renderHrStats } from './views/hrStats.js?v=34';
 
 // Firebase Auth Bridge
 class Auth {
@@ -309,10 +308,6 @@ class App {
             case 'hrStats':
                 this.updateHeader();
                 renderHrStats(this.container);
-                break;
-            case 'rejectionManager':
-                this.updateHeader();
-                renderRejectionManager(this.container);
                 break;
             default:
                 renderDashboard(this.container);

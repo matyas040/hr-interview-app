@@ -1,4 +1,4 @@
-import { t, getLang } from '../services/translations.js?v=32';
+import { t, getLang } from '../services/translations.js?v=34';
 
 export function renderCandidateInterview(container, params = {}) {
     const { roleId, candidateName, issuedBy, issuedByName } = params;
