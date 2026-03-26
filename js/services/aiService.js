@@ -254,21 +254,21 @@ Task: Identify patterns. Return ONLY valid JSON. ANSWER IN ENGLISH.
  * Generates 20 interview questions based on a Job Description.
  * Returns: Array of { text, answerType }
  */
-export async function generateInterviewQuestions(jdText, jdPdfBase64) {
+export async function generateInterviewQuestions(jdText, jdPdfBase64, role) {
     const apiKey = getApiKey();
     if (!apiKey) throw new Error('NO_API_KEY');
 
     const lang = getLang();
     const prompt = lang === 'hu'
-        ? `Te egy Senior Technikai Recruiter vagy. Feladatod 20 darab releváns interjúkérdés generálása az alábbi munkakörhöz: "${role.title}".
+        ? `Te egy Senior Technikai Recruiter vagy. Feladatod 20 darab releváns interjúkérdés generálása az alábbi munkakörhöz: "${role?.title || 'Ismeretlen'}".
 TÖREKEDJ A RELEVÁNS SZAKMAI TUDÁSRA: Ne csak a megadott leírást ismételd, hanem hozz be külső szakmai szempontokat is a munkakör neve alapján.
 KÉRÉS: A kérdések legalább 60%-a legyen "rövid, eldöntendő vagy gyorsan megválaszolható" (short), a maradék pedig "kifejtős vagy szituációs" (detailed).
 VÁLASZOLJ MAGYARUL. Adj vissza KIZÁRÓLAG egy JSON tömböt az alábbi formátumban:
 [
   { "text": "Kérdés szövege", "answerType": "short|detailed" }
 ]`
-        : `You are a Senior Technical Recruiter. Your task is to generate 20 relevant interview questions for the following role: "${activeRole.title}".
-PRIORITIZE 전문 KNOWLEDGE: Don't just parrot the provided description; bring in external professional context based on the job title.
+        : `You are a Senior Technical Recruiter. Your task is to generate 20 relevant interview questions for the following role: "${role?.title || 'Unknown'}".
+PRIORITIZE PROFESSIONAL KNOWLEDGE: Don't just parrot the provided description; bring in external professional context based on the job title.
 REQUEST: At least 60% of questions should be "short, direct, or quick-answer" (short), while the rest should be "open-ended or situational" (detailed).
 ANSWER IN ENGLISH. Return ONLY a JSON array in the following format:
 [
