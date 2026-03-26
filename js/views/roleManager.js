@@ -1,5 +1,5 @@
-import { t, getLang } from '../services/translations.js?v=23';
-import { generateInterviewQuestions } from '../services/aiService.js?v=23';
+import { t, getLang } from '../services/translations.js?v=24';
+import { generateInterviewQuestions } from '../services/aiService.js?v=24';
 
 export function renderRoleManager(container, params = {}) {
     const render = () => {
@@ -8,235 +8,204 @@ export function renderRoleManager(container, params = {}) {
         const activeRole = activeRoleId ? window.appStore.getRoleById(activeRoleId) : null;
 
         container.innerHTML = `
-            <div class="role-manager-layout">
-                <!-- Sidebar -->
-                <aside class="role-sidebar card">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em;">${t('role.list_title')}</h2>
-                        <button class="btn-icon btn-add-circle" id="btn-add-role" title="${t('role.add_new')}">
-                            <i data-lucide="plus"></i>
+            <div class="simple-role-manager">
+                <div class="flex justify-between items-center mb-10">
+                    <div>
+                        <button class="btn-back mb-2" onclick="window.navigateTo('dashboard')">
+                            <i data-lucide="arrow-left" style="width: 14px;"></i> ${t('role.back')}
                         </button>
+                        <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">${t('role.title')}</h2>
                     </div>
-                    
-                    <div class="role-list">
-                        ${roles.map(r => `
-                            <div class="role-card ${r.id === activeRoleId ? 'active' : ''}" data-id="${r.id}">
-                                <div class="role-card-info">
-                                    <span class="role-card-title">${r.title}</span>
-                                    <span class="role-card-meta">${r.questions.length} ${getLang() === 'hu' ? 'kérdés' : 'questions'}</span>
-                                </div>
-                                ${r.pdfName || r.jdFileName ? '<i data-lucide="paperclip" class="role-card-icon"></i>' : ''}
-                            </div>
-                        `).join('')}
-                        ${roles.length === 0 ? `<div class="empty-state-small">${t('role.no_roles')}</div>` : ''}
-                    </div>
-                </aside>
+                    <button class="btn btn-primary" id="btn-add-role">
+                        <i data-lucide="plus"></i> ${t('role.add_new')}
+                    </button>
+                </div>
 
-                <!-- Content Area -->
-                <main class="role-main">
-                    ${activeRole ? `
-                        <header class="role-header card mb-6">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-4 flex-1">
-                                    <button class="btn-icon" onclick="window.navigateTo('dashboard')">
-                                        <i data-lucide="chevron-left"></i>
-                                    </button>
-                                    <input type="text" id="role-title-input" class="role-title-field" value="${activeRole.title}">
+                <div class="role-grid">
+                    <!-- Sidebar: Roles -->
+                    <aside class="simple-sidebar">
+                        <h3 class="sidebar-label">${t('role.list_title')}</h3>
+                        <div class="role-scroller">
+                            ${roles.map(r => `
+                                <div class="role-item-mini ${r.id === activeRoleId ? 'active' : ''}" data-id="${r.id}">
+                                    <span class="title">${r.title}</span>
+                                    <span class="count">${r.questions.length} questions</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <button class="btn btn-primary" id="btn-save-role">
-                                        <i data-lucide="check"></i> ${t('role.save')}
-                                    </button>
-                                    <button class="btn btn-secondary btn-danger-hover" id="btn-delete-role">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </header>
+                            `).join('')}
+                        </div>
+                    </aside>
 
-                        <!-- Two Column Actions & Questions -->
-                        <div class="role-content-grid">
-                            <!-- Left: Questions List -->
-                            <section class="card question-section">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h3 style="font-size: 1rem; font-weight: 500;">${t('role.questions')}</h3>
-                                    <span class="badge">${activeRole.questions.length}</span>
-                                </div>
+                    <!-- Main: Editor -->
+                    <main class="editor-area">
+                        ${activeRole ? `
+                            <div class="edit-card">
+                                <section class="editor-header mb-8">
+                                    <input type="text" id="role-title-input" class="role-title-input" value="${activeRole.title}">
+                                    <div class="flex items-center gap-2">
+                                        <button class="btn btn-success" id="btn-save-role">${t('role.save')}</button>
+                                        <button class="btn-icon-del" id="btn-delete-role"><i data-lucide="trash-2"></i></button>
+                                    </div>
+                                </section>
 
-                                <div class="questions-scroll-area">
-                                    <div id="questions-list" class="questions-compact-list">
+                                <section class="questions-section mb-10">
+                                    <div class="flex items-center justify-between mb-6">
+                                        <h3 class="section-title">${t('role.questions')}</h3>
+                                        <span class="badge-count">${activeRole.questions.length}</span>
+                                    </div>
+                                    
+                                    <div id="questions-list" class="q-stack">
                                         ${activeRole.questions.map((q, index) => `
-                                            <div class="q-row">
-                                                <div class="q-number">${index + 1}</div>
-                                                <div class="q-content">
-                                                    <input type="text" class="q-text-input q-input" data-qid="${q.id}" value="${q.text}">
-                                                    <div class="q-actions">
-                                                        <select class="q-type-select q-type-minimal" data-qid="${q.id}">
-                                                            <option value="short" ${(q.answerType || 'detailed') === 'short' ? 'selected' : ''}>⚡ ${getLang() === 'hu' ? 'Rövid' : 'Short'}</option>
-                                                            <option value="detailed" ${(q.answerType || 'detailed') === 'detailed' ? 'selected' : ''}>📝 ${getLang() === 'hu' ? 'Részletes' : 'Detailed'}</option>
+                                            <div class="q-item">
+                                                <div class="q-lead">${index + 1}</div>
+                                                <div class="q-body">
+                                                    <input type="text" class="q-input" data-qid="${q.id}" value="${q.text}">
+                                                    <div class="q-meta">
+                                                        <select class="q-type-select" data-qid="${q.id}">
+                                                            <option value="short" ${(q.answerType || 'detailed') === 'short' ? 'selected' : ''}>${getLang() === 'hu' ? 'Rövid' : 'Short'}</option>
+                                                            <option value="detailed" ${(q.answerType || 'detailed') === 'detailed' ? 'selected' : ''}>${getLang() === 'hu' ? 'Részletes' : 'Detailed'}</option>
                                                         </select>
-                                                        <button class="btn-icon btn-del-q" data-qid="${q.id}"><i data-lucide="x"></i></button>
+                                                        <button class="btn-q-del" data-qid="${q.id}"><i data-lucide="x"></i></button>
                                                     </div>
                                                 </div>
                                             </div>
                                         `).join('')}
-                                        ${activeRole.questions.length === 0 ? `<div class="empty-state-small">${t('role.no_questions')}</div>` : ''}
-                                    </div>
-                                </div>
-
-                                <div class="add-q-container mt-6">
-                                    <input type="text" id="new-q-input" class="form-input-minimal" placeholder="${t('role.q_placeholder')}">
-                                    <button class="btn-add-square" id="btn-add-q"><i data-lucide="plus"></i></button>
-                                </div>
-                            </section>
-
-                            <!-- Right: Role Assets (JD & PDF) -->
-                            <div class="role-assets">
-                                <!-- AI Section -->
-                                <section class="card ai-card mb-4 highlight-border">
-                                    <div class="ai-header mb-4">
-                                        <div class="flex items-center gap-2">
-                                            <div class="ai-icon-bg"><i data-lucide="sparkles"></i></div>
-                                            <div>
-                                                <h4 style="font-size: 0.9rem; font-weight: 600;">${t('role.jd_title')}</h4>
-                                                <p style="font-size: 0.75rem; color: var(--text-secondary);">${t('role.jd_subtitle')}</p>
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    ${activeRole.jdFileName ? `
-                                        <div class="file-pill ai-file mb-4">
-                                            <i data-lucide="file-text"></i>
-                                            <span class="file-name">${activeRole.jdFileName}</span>
-                                            <button class="btn-icon-small" id="btn-remove-jd"><i data-lucide="x"></i></button>
-                                        </div>
-                                        <button class="btn btn-ai w-full" id="btn-generate-qs">
-                                            <i data-lucide="wand-2"></i> ${t('role.jd_generate')}
+                                    <div class="add-q-bar mt-6">
+                                        <input type="text" id="new-q-input" class="new-q-field" placeholder="${t('role.q_placeholder')}">
+                                        <button class="btn btn-primary" id="btn-add-q">
+                                            <i data-lucide="plus"></i>
                                         </button>
-                                    ` : `
-                                        <label class="upload-dropzone">
-                                            <i data-lucide="upload-cloud"></i>
-                                            <span>${t('role.jd_upload')}</span>
-                                            <input type="file" accept=".pdf,.txt,.docx" id="jd-upload-input" hidden>
-                                        </label>
-                                    `}
-                                    <div id="jd-upload-status" class="status-msg"></div>
+                                    </div>
                                 </section>
 
-                                <!-- PDF Section -->
-                                <section class="card">
-                                    <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem;">${t('role.attachment_title')}</h4>
-                                    ${activeRole.pdfName ? `
-                                        <div class="file-pill mb-4">
-                                            <i data-lucide="book-open"></i>
-                                            <span class="file-name">${activeRole.pdfName}</span>
-                                            <button class="btn-icon-small" id="btn-preview-pdf"><i data-lucide="external-link"></i></button>
-                                            <button class="btn-icon-small" id="btn-remove-pdf"><i data-lucide="trash-2"></i></button>
-                                        </div>
-                                    ` : `
-                                        <label class="btn btn-secondary w-full" style="cursor: pointer;">
-                                            <i data-lucide="upload"></i> ${t('role.pdf_upload')}
-                                            <input type="file" accept=".pdf" id="pdf-upload-input" hidden>
-                                        </label>
-                                    `}
-                                    <div id="pdf-upload-status" class="status-msg"></div>
-                                </section>
+                                <footer class="assets-footer">
+                                    <div class="asset-group">
+                                        <h4 class="asset-label">${t('role.jd_title')}</h4>
+                                        <p class="asset-desc">${t('role.jd_subtitle')}</p>
+                                        ${activeRole.jdFileName ? `
+                                            <div class="asset-pill active">
+                                                <i data-lucide="file-text"></i>
+                                                <span class="name">${activeRole.jdFileName}</span>
+                                                <button class="btn-pill-del" id="btn-remove-jd"><i data-lucide="x"></i></button>
+                                            </div>
+                                            <button class="btn btn-ai-simple w-full mt-2" id="btn-generate-qs">✨ ${t('role.jd_generate')}</button>
+                                        ` : `
+                                            <label class="simple-upload">
+                                                <i data-lucide="upload"></i> Upload JD
+                                                <input type="file" accept=".pdf,.txt,.docx" id="jd-upload-input" hidden>
+                                            </label>
+                                        `}
+                                        <div id="jd-upload-status" class="status-box"></div>
+                                    </div>
+
+                                    <div class="asset-group">
+                                        <h4 class="asset-label">${t('role.attachment_title')}</h4>
+                                        <p class="asset-desc">${t('role.attachment_subtitle')}</p>
+                                        ${activeRole.pdfName ? `
+                                            <div class="asset-pill active">
+                                                <i data-lucide="paperclip"></i>
+                                                <span class="name">${activeRole.pdfName}</span>
+                                                <div class="flex gap-2">
+                                                    <button class="btn-pill-action" id="btn-preview-pdf"><i data-lucide="external-link"></i></button>
+                                                    <button class="btn-pill-del" id="btn-remove-pdf"><i data-lucide="trash-2"></i></button>
+                                                </div>
+                                            </div>
+                                        ` : `
+                                            <label class="simple-upload">
+                                                <i data-lucide="upload"></i> Upload Attachment
+                                                <input type="file" accept=".pdf" id="pdf-upload-input" hidden>
+                                            </label>
+                                        `}
+                                        <div id="pdf-upload-status" class="status-box"></div>
+                                    </div>
+                                </footer>
                             </div>
-                        </div>
-                    ` : `
-                        <div class="empty-state-full card">
-                            <div class="empty-icon-lg"><i data-lucide="briefcase"></i></div>
-                            <h3>${t('role.select_role')}</h3>
-                            <p>${t('role.select_role_subtitle')}</p>
-                            <button class="btn btn-primary mt-6" id="btn-add-role-empty"><i data-lucide="plus"></i> ${t('role.add_new')}</button>
-                        </div>
-                    `}
-                </main>
+                        ` : `
+                            <div class="empty-placeholder">
+                                <i data-lucide="briefcase"></i>
+                                <p>${t('role.select_role')}</p>
+                            </div>
+                        `}
+                    </main>
+                </div>
             </div>
 
             <style>
-                .role-manager-layout { display: flex; gap: 2rem; align-items: flex-start; min-height: 80vh; }
-                .role-sidebar { width: 300px; flex-shrink: 0; position: sticky; top: 100px; padding: 1.5rem; height: fit-content; }
-                .role-main { flex: 1; min-width: 0; }
-                
-                /* Sidebar List */
-                .role-list { display: flex; flex-direction: column; gap: 0.5rem; }
-                .role-card { 
-                    padding: 1rem; border-radius: 12px; border: 1px solid transparent; cursor: pointer;
-                    display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;
-                    background: rgba(255,255,255,0.03);
-                }
-                .role-card:hover { background: var(--bg-primary); border-color: var(--border-color); }
-                .role-card.active { 
-                    background: var(--bg-secondary); border-color: var(--accent);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                }
-                .role-card-title { display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.15rem; }
-                .role-card-meta { font-size: 0.75rem; color: var(--text-secondary); }
-                .role-card-icon { width: 1rem; color: var(--accent); opacity: 0.7; }
+                .simple-role-manager { max-width: 1100px; margin: 0 auto; user-select: none; }
+                .btn-back { background: transparent; border: none; color: var(--text-secondary); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; font-weight: 500; }
+                .btn-back:hover { color: var(--accent); }
 
-                /* Header Area */
-                .role-header { padding: 1.25rem 1.75rem; }
-                .role-title-field { 
-                    background: transparent; border: none; font-size: 1.35rem; font-weight: 700; 
-                    color: var(--text-primary); width: 100%; outline: none;
+                .role-grid { display: grid; grid-template-columns: 280px 1fr; gap: 3rem; align-items: flex-start; }
+                
+                /* Sidebar */
+                .sidebar-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 1rem; font-weight: 600; padding-left: 0.5rem; }
+                .role-scroller { display: flex; flex-direction: column; gap: 0.4rem; }
+                .role-item-mini { 
+                    padding: 0.85rem 1rem; border-radius: 10px; cursor: pointer; transition: all 0.2s;
+                    display: flex; flex-direction: column; border: 1px solid transparent; 
                 }
-                
-                /* Grid Content */
-                .role-content-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; }
-                
-                /* Question Rows */
-                .questions-compact-list { display: flex; flex-direction: column; gap: 0.75rem; }
-                .q-row { 
-                    display: flex; gap: 1rem; align-items: flex-start; padding: 0.75rem; 
-                    border-radius: 12px; transition: background 0.2s;
-                }
-                .q-row:hover { background: rgba(0,0,0,0.02); }
-                [data-theme="dark"] .q-row:hover { background: rgba(255,255,255,0.02); }
-                
-                .q-number { width: 24px; height: 24px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-top: 8px; flex-shrink: 0; }
-                .q-content { flex: 1; min-width: 0; }
-                .q-text-input { background: transparent; border: none; border-bottom: 1px solid transparent; width: 100%; padding: 4px 0; font-size: 0.95rem; color: var(--text-primary); outline: none; transition: border-color 0.2s; }
-                .q-text-input:focus { border-color: var(--accent); }
-                .q-actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 4px; opacity: 0; transition: opacity 0.2s; }
-                .q-row:hover .q-actions { opacity: 1; }
-                
-                .q-type-minimal { background: transparent; border: none; font-size: 0.7rem; color: var(--text-secondary); outline: none; cursor: pointer; padding: 2px 4px; }
-                .q-type-minimal:hover { color: var(--accent); }
-                
-                .add-q-container { display: flex; gap: 0.5rem; background: var(--bg-primary); border: 1px dotted var(--border-color); padding: 6px; border-radius: 12px; }
-                .form-input-minimal { flex: 1; background: transparent; border: none; padding: 0.5rem; font-size: 0.875rem; outline: none; }
-                .btn-add-square { width: 34px; height: 34px; background: var(--accent); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-                .btn-add-square:hover { transform: scale(1.05); }
+                .role-item-mini:hover { background: rgba(0,0,0,0.03); }
+                .role-item-mini.active { background: white; border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+                .role-item-mini .title { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
+                .role-item-mini .count { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.1rem; }
+                .role-item-mini.active .title { color: var(--accent); }
 
-                /* AI Card Special */
-                .highlight-border { border: 1.5px solid rgba(139,92,246,0.2); }
-                .ai-icon-bg { width: 32px; height: 32px; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
-                .btn-ai { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; box-shadow: 0 4px 12px rgba(139,92,246,0.3); font-weight: 600; }
-                .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(139,92,246,0.4); }
+                /* Editor Card */
+                .edit-card { background: white; border-radius: 16px; border: 1px solid var(--border-color); padding: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
                 
-                /* File Pills */
-                .file-pill { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--bg-primary); border-radius: 10px; border: 1px solid var(--border-color); }
-                .file-name { flex: 1; font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-                .btn-icon-small { padding: 4px; border-radius: 4px; color: var(--text-secondary); transition: all 0.2s; }
-                .btn-icon-small:hover { background: rgba(0,0,0,0.05); color: var(--danger); }
-                
-                /* Dropzone */
-                .upload-dropzone { 
-                    display: flex; flex-direction: column; align-items: center; gap: 0.5rem; 
-                    padding: 1.5rem; border: 2px dashed var(--border-color); border-radius: 12px; 
-                    cursor: pointer; transition: all 0.2s; color: var(--text-secondary);
+                .role-title-input { 
+                    flex: 1; border: none; font-size: 1.75rem; font-weight: 700; color: var(--text-primary); 
+                    outline: none; background: transparent; padding: 0.5rem 0; border-bottom: 2px solid transparent; transition: border-color 0.2s;
                 }
-                .upload-dropzone:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-                
-                /* Empty States */
-                .empty-state-full { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; }
-                .empty-icon-lg { font-size: 3rem; color: var(--accent-soft); margin-bottom: 1.5rem; }
-                .empty-state-small { padding: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; font-style: italic; }
-                .badge { font-size: 0.7rem; background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 12px; font-weight: 700; }
+                .role-title-input:focus { border-color: var(--accent-soft); }
+                .btn-icon-del { width: 42px; height: 42px; border-radius: 10px; border: none; background: rgba(239, 68, 68, 0.05); color: var(--danger); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+                .btn-icon-del:hover { background: var(--danger); color: white; }
 
-                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                .spin { animation: spin 1s linear infinite; }
+                .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+                .badge-count { background: var(--bg-primary); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); border: 1px solid var(--border-color); }
+
+                /* Questions */
+                .q-stack { display: flex; flex-direction: column; gap: 0.75rem; }
+                .q-item { display: flex; gap: 1rem; align-items: flex-start; padding: 0.75rem; border-radius: 12px; transition: background 0.2s; }
+                .q-item:hover { background: rgba(0,0,0,0.015); }
+                .q-lead { width: 28px; height: 28px; border-radius: 8px; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); flex-shrink: 0; margin-top: 2px; }
+                .q-body { flex: 1; }
+                .q-input { width: 100%; border: none; background: transparent; font-size: 1rem; color: var(--text-primary); outline: none; padding: 4px 0; border-bottom: 1px solid transparent; }
+                .q-input:focus { border-color: var(--accent-soft); }
+                .q-meta { display: flex; align-items: center; gap: 1rem; margin-top: 0.4rem; opacity: 0; transition: opacity 0.2s; }
+                .q-item:hover .q-meta { opacity: 1; }
+                .q-type-select { background: transparent; border: none; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; outline: none; }
+                .btn-q-del { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 2px; }
+                .btn-q-del:hover { color: var(--danger); }
+
+                .add-q-bar { display: flex; gap: 0.75rem; padding: 0.5rem; background: var(--bg-primary); border-radius: 12px; border: 1px dashed var(--border-color); }
+                .new-q-field { flex: 1; border: none; background: transparent; padding: 0.5rem; font-size: 0.95rem; outline: none; }
+
+                /* Assets Footer */
+                .assets-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+                .asset-label { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+                .asset-desc { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem; }
+                
+                .asset-pill { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); }
+                .asset-pill .name { flex: 1; font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .btn-pill-del { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; }
+                .btn-pill-del:hover { color: var(--danger); }
+                .btn-pill-action { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; }
+                .btn-pill-action:hover { color: var(--accent); }
+
+                .simple-upload { border: 2px dashed var(--border-color); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+                .simple-upload:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+                
+                .btn-ai-simple { background: white; border: 1px solid var(--accent); color: var(--accent); font-weight: 600; font-size: 0.85rem; }
+                .btn-ai-simple:hover { background: var(--accent); color: white; }
+
+                .empty-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; color: var(--text-secondary); }
+                .empty-placeholder i { width: 3rem; height: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+                .status-box { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+                @keyframes spin { to { transform: rotate(360deg); } }
+                .spin { animation: spin 1s linear infinite; display: inline-block; }
                 .w-full { width: 100%; }
             </style>
         `;
@@ -246,8 +215,7 @@ export function renderRoleManager(container, params = {}) {
     };
 
     const attachEvents = (activeRole) => {
-        // Switch role (now using the card class)
-        container.querySelectorAll('.role-card').forEach(el => {
+        container.querySelectorAll('.role-item-mini').forEach(el => {
             el.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
                 params.roleId = id;
@@ -255,18 +223,13 @@ export function renderRoleManager(container, params = {}) {
             });
         });
 
-        // Add role
         document.getElementById('btn-add-role')?.addEventListener('click', () => {
             const newRole = window.appStore.addRole(getLang() === 'hu' ? 'Új Munkakör' : 'New Role');
             params.roleId = newRole.id;
             render();
         });
-        document.getElementById('btn-add-role-empty')?.addEventListener('click', () => {
-            document.getElementById('btn-add-role').click();
-        });
 
         if (activeRole) {
-            // Save role title
             document.getElementById('btn-save-role')?.addEventListener('click', () => {
                 const title = document.getElementById('role-title-input').value.trim();
                 if (title) {
@@ -275,7 +238,6 @@ export function renderRoleManager(container, params = {}) {
                 }
             });
 
-            // Delete role
             document.getElementById('btn-delete-role')?.addEventListener('click', () => {
                 if (confirm(t('role.delete_role_confirm'))) {
                     window.appStore.deleteRole(activeRole.id);
@@ -284,7 +246,6 @@ export function renderRoleManager(container, params = {}) {
                 }
             });
 
-            // Update existing question text (change event)
             container.querySelectorAll('.q-input').forEach(el => {
                 el.addEventListener('change', (e) => {
                     const qId = e.currentTarget.dataset.qid;
@@ -293,7 +254,6 @@ export function renderRoleManager(container, params = {}) {
                 });
             });
 
-            // Update existing question type
             container.querySelectorAll('.q-type-select').forEach(el => {
                 el.addEventListener('change', (e) => {
                     const qId = e.currentTarget.dataset.qid;
@@ -302,7 +262,6 @@ export function renderRoleManager(container, params = {}) {
                 });
             });
 
-            // Delete question
             container.querySelectorAll('.btn-del-q').forEach(el => {
                 el.addEventListener('click', (e) => {
                     const qId = e.currentTarget.dataset.qid;
@@ -311,7 +270,6 @@ export function renderRoleManager(container, params = {}) {
                 });
             });
 
-            // Add new question
             document.getElementById('btn-add-q')?.addEventListener('click', () => {
                 const val  = document.getElementById('new-q-input').value.trim();
                 if (val) {
@@ -319,17 +277,12 @@ export function renderRoleManager(container, params = {}) {
                     render();
                 }
             });
-            document.getElementById('new-q-input')?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') document.getElementById('btn-add-q')?.click();
-            });
 
-            // JD: file upload
             document.getElementById('jd-upload-input')?.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
                 const statusEl = document.getElementById('jd-upload-status');
-                statusEl.innerHTML = `<span style="color: var(--text-secondary); font-size: 0.75rem;">⏳ ${t('role.uploading')}</span>`;
-                
+                statusEl.innerHTML = `⏳ ${t('role.uploading')}...`;
                 const isPdf = file.name.toLowerCase().endsWith('.pdf');
                 const isDocx = file.name.toLowerCase().endsWith('.docx');
                 const reader = new FileReader();
@@ -347,7 +300,7 @@ export function renderRoleManager(container, params = {}) {
                         }
                         render();
                     } catch (err) {
-                        statusEl.innerHTML = `<span style="color: var(--danger); font-size: 0.75rem;">✗ ${t('role.upload_error')}</span>`;
+                        statusEl.innerHTML = `✗ Error`;
                     }
                 };
                 if (isPdf) reader.readAsDataURL(file);
@@ -355,7 +308,6 @@ export function renderRoleManager(container, params = {}) {
                 else reader.readAsText(file);
             });
 
-            // JD: remove
             document.getElementById('btn-remove-jd')?.addEventListener('click', () => {
                 if (confirm(t('role.remove_jd_confirm'))) {
                     window.appStore.clearRoleJobDesc(activeRole.id);
@@ -363,40 +315,28 @@ export function renderRoleManager(container, params = {}) {
                 }
             });
 
-            // JD: AI Generate Questions
             document.getElementById('btn-generate-qs')?.addEventListener('click', async () => {
                 const btn = document.getElementById('btn-generate-qs');
                 const originalHtml = btn.innerHTML;
-                
-                if (!activeRole.jdText && !activeRole.jdPdfBase64) {
-                    alert(getLang() === 'hu' ? "Előbb tölts fel egy munkaköri leírást!" : "Please upload a job description first!");
-                    return;
-                }
-
                 btn.disabled = true;
-                btn.innerHTML = `<i class="spin" data-lucide="loader-2"></i> ${t('role.jd_generating')}`;
-                if (window.lucide) lucide.createIcons();
+                btn.innerHTML = `<span class="spin"><i data-lucide="loader-2" style="width:14px;"></i></span> ${t('role.jd_generating')}`;
+                lucide.createIcons();
 
                 try {
                     const qs = await generateInterviewQuestions(activeRole.jdText, activeRole.jdPdfBase64, activeRole);
-                    if (Array.isArray(qs) && qs.length > 0) {
-                        window.appStore.appendRoleQuestions(activeRole.id, qs);
-                        render();
-                    } else { throw new Error("Format error"); }
+                    window.appStore.appendRoleQuestions(activeRole.id, qs);
+                    render();
                 } catch (err) {
-                    alert("AI Error: " + (err.message || "Failed"));
+                    alert("Error: " + err.message);
                     btn.disabled = false;
                     btn.innerHTML = originalHtml;
-                    if (window.lucide) lucide.createIcons();
+                    lucide.createIcons();
                 }
             });
 
-            // PDF: file upload
             document.getElementById('pdf-upload-input')?.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-                const statusEl = document.getElementById('pdf-upload-status');
-                statusEl.innerHTML = `<span style="color: var(--text-secondary); font-size: 0.8rem;">⏳ ${t('role.uploading')}</span>`;
                 const reader = new FileReader();
                 reader.onload = () => {
                     const base64 = reader.result.split(',')[1];
@@ -408,10 +348,7 @@ export function renderRoleManager(container, params = {}) {
 
             document.getElementById('btn-preview-pdf')?.addEventListener('click', () => {
                 const role = window.appStore.getRoleById(activeRole.id);
-                if (role?.pdfBase64) {
-                    const url = `data:application/pdf;base64,${role.pdfBase64}`;
-                    window.open(url, '_blank');
-                }
+                if (role?.pdfBase64) window.open(`data:application/pdf;base64,${role.pdfBase64}`, '_blank');
             });
 
             document.getElementById('btn-remove-pdf')?.addEventListener('click', () => {

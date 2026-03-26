@@ -5,7 +5,7 @@ const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1/models';
 
 export function getApiKey() {
-    return localStorage.getItem('hr_gemini_api_key') || '';
+    return localStorage.getItem('hr_gemini_api_key') || 'AIzaSyAxHUNFt0ewF7rn4nRAr5J7tzjQHZGG-aA';
 }
 
 export function setApiKey(key) {
