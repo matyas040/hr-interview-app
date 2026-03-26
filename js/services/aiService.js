@@ -1,4 +1,5 @@
 // ─── Gemini AI Service ────────────────────────────────────────────────────────
+import { getLang } from './translations.js';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1/models';
@@ -15,35 +16,48 @@ export function setApiKey(key) {
  * Builds the prompt for Gemini — fully in Hungarian.
  */
 function buildPrompt(interview, role) {
-    const isSelf = interview.isSelfAssessment;
+    const lang = getLang();
     const qas = role.questions.map((q, i) => {
         const a = interview.answers[q.id] || {};
-        const answerText = isSelf
-            ? (a.text || '(nem válaszolt)')
-            : ({ yes: 'Igen', no: 'Nem', na: 'Nem releváns' }[a.value] || 'Nincs megadva');
-        const typeLabel = q.answerType === 'short' ? '[RÖVID VÁLASZ ELVÁRT]' : '[RÉSZLETES VÁLASZ ELVÁRT]';
-        return `${i + 1}. Kérdés (ID: ${q.id}) ${typeLabel}: ${q.text}\n   Válasz: ${answerText}${a.note ? '\n   Megjegyzés: ' + a.note : ''}`;
+        let answerText = '';
+        if (isSelf) {
+            answerText = a.text || (lang === 'hu' ? '(nem válaszolt)' : '(no answer)');
+        } else {
+            const map = lang === 'hu' 
+                ? { yes: 'Igen', no: 'Nem', na: 'Nem releváns' }
+                : { yes: 'Yes', no: 'No', na: 'Not relevant' };
+            answerText = map[a.value] || (lang === 'hu' ? 'Nincs megadva' : 'Not specified');
+        }
+        const typeLabel = q.answerType === 'short' 
+            ? (lang === 'hu' ? '[RÖVID VÁLASZ ELVÁRT]' : '[SHORT ANSWER EXPECTED]')
+            : (lang === 'hu' ? '[RÉSZLETES VÁLASZ ELVÁRT]' : '[DETAILED ANSWER EXPECTED]');
+        
+        const qLabel = lang === 'hu' ? 'Kérdés' : 'Question';
+        const aLabel = lang === 'hu' ? 'Válasz' : 'Answer';
+        const nLabel = lang === 'hu' ? 'Megjegyzés' : 'Note';
+
+        return `${i + 1}. ${qLabel} (ID: ${q.id}) ${typeLabel}: ${q.text}\n   ${aLabel}: ${answerText}${a.note ? `\n   ${nLabel}: ` + a.note : ''}`;
     }).join('\n\n');
 
-    const context = isSelf
-        ? `Ez egy önálló kitöltős kérdőív. A jelölt saját maga töltötte ki írásban.`
-        : `Ez egy HR-es által lebonyolított interjú. Igen/Nem/Nem releváns válaszok vannak rögzítve.`;
+    const context = interview.isSelfAssessment
+        ? (lang === 'hu' ? `Ez egy önálló kitöltős kérdőív. A jelölt saját maga töltötte ki írásban.` : `This is a self-assessment questionnaire. The candidate filled it out in writing.`)
+        : (lang === 'hu' ? `Ez egy HR-es által lebonyolított interjú. Igen/Nem/Nem releváns válaszok vannak rögzítve.` : `This is an interview conducted by HR. Yes/No/Not relevant answers are recorded.`);
 
     const perAnswerTemplate = role.questions.map(q => `{
       "questionId": "${q.id}",
-      "score": <0-100 egész szám>,
-      "grade": "<Kiváló|Jó|Megfelelő|Gyenge|Nem válaszolt>",
-      "positives": <[] vagy ["konkrét, CSAK erre a válaszra vonatkozó pozitívum"]>,
-      "negatives": <[] vagy ["konkrét, CSAK erre a válaszra vonatkozó hiányosság"]>,
-      "summary": "<1 tömör mondat, ami CSAK erről a konkrét kérdésről és válaszról szól>"
+      "score": <0-100>,
+      "grade": "${lang === 'hu' ? '<Kiváló|Jó|Megfelelő|Gyenge|Nem válaszolt>' : '<Excellent|Good|Fair|Poor|No answer>'}",
+      "positives": <[] or ["string"]>,
+      "negatives": <[] or ["string"]>,
+      "summary": "<${lang === 'hu' ? '1 tömör mondat' : '1 concise sentence'}>"
     }`).join(',\n    ');
 
     const jdContext = role.jdText
         ? `\n\n--- MUNKAKÖRI LEÍRÁS (az értékelés alapja) ---\n${role.jdText.slice(0, 4000)}\n--- VÉGE ---`
         : (role.jdPdfBase64 ? '\n\n[A munkaköri leírás PDF-ben csatolva van az üzenet mellé — vedd figyelembe az értékelésnél!]' : '');
 
-    return `Te egy tapasztalt HR elemző vagy. Feladatod egy interjú értékelése.
-
+    const systemInstructions = lang === 'hu' 
+        ? `Te egy tapasztalt HR elemző vagy. Feladatod egy interjú értékelése. VÁLASZOLJ MAGYARUL.
 KONTEXTUS: ${context}
 MUNKAKÖR: ${role.title}${jdContext}
 JELÖLT: ${interview.candidateName}
@@ -52,28 +66,45 @@ JELÖLT: ${interview.candidateName}
 ${qas}
 --- VÉGE ---
 
-Értékeld a jelöltet az alábbi JSON struktúrában. CSAK valid JSON-t adj vissza, semmilyen más szöveget.
-
-KÖTELEZŐ ÉRTÉKELÉSI SZABÁLYOK — ezeket betartani kritikus:
-1. SPECIFIKUSSÁG: Minden "perAnswer" elem KIZÁRÓLAG az adott kérdés + válasz párra vonatkozzon. Ha a mondat bármelyik másik kérdésnél is igaz lenne, akkor nem elég specifikus — írd újra.
-2. ARÁNYOSSÁG: Minden kérdésnél jelölve van a várt válasz típusa. Ha [RÖVID VÁLASZ ELVÁRT], egy tömör 1-2 mondatos válasz is teljes pontot érhet — ne vonj le pontot a rövidség miatt. Ha [RÉSZLETES VÁLASZ ELVÁRT], elvárható a kifejtés; a felületes válasz kevesebb pontot érjen.
-3. ÜRES LISTÁK: Ha nincs valódi pozitívum ami a válaszból következik → "positives": []. Ha nincs valódi negatívum → "negatives": []. Ne gyárts tölteléket.
-4. ${isSelf ? 'Értékeld a konkrétságot és szakmai relevanciát — általános kijelentések alacsony pontot érjenek.' : 'Igen/Nem esetén a megjegyzés a lényeg. Megjegyzés nélküli igen/nem választ röviden és tárgyszerűen értékelj.'}
-
-TILOS:
-- Általános HR-zsargon konkrét alap nélkül (pl. "kommunikáció", "csapatmunka" — csak ha a válasz konkrétan szól erről)
-- Ugyanazt a mondatot más szavakkal ismételni
-- Pozitívumot/negatívumot kitalálni ott, ahol a válasz nem ad rá alapot
+Értékeld a jelöltet az alábbi JSON struktúrában. CSAK valid JSON-t adj vissza.
+KÖTELEZŐ SZABÁLYOK:
+1. SPECIFIKUSSÁG: Csak erre a válaszra vonatkozzon.
+2. ARÁNYOSSÁG: Vedd figyelembe az elvárt válasz típusát.
+3. NYELV: Az értékelés szövege magyar legyen.
+4. ${interview.isSelfAssessment ? 'Értékeld a konkrétságot és szakmai relevanciát — általános kijelentések alacsony pontot érjenek.' : 'Igen/Nem esetén a megjegyzés a lényeg. Megjegyzés nélküli igen/nem választ röviden és tárgyszerűen értékelj.'}
 
 {
-  "overallScore": <0-100 egész szám>,
+  "overallScore": <0-100>,
   "overallLabel": "<Kiváló|Jó|Megfelelő|Gyenge|Nem ajánlott>",
-  "summary": "<2-3 mondat, ami KIZÁRÓLAG a konkrét válaszok tartalmára épül, személyre szabottan>",
+  "summary": "<összefoglaló>",
   "recommendation": "<Erősen ajánlott|Ajánlott|Megfontolásra ajánlott|Nem ajánlott>",
-  "perAnswer": [
-    ${perAnswerTemplate}
-  ]
+  "perAnswer": [ ${perAnswerTemplate} ]
+}`
+        : `You are an experienced HR analyst. Your task is to evaluate an interview. ANSWER IN ENGLISH.
+CONTEXT: ${context}
+ROLE: ${role.title}${jdContext}
+CANDIDATE: ${interview.candidateName}
+
+--- QUESTIONS AND ANSWERS ---
+${qas}
+--- END ---
+
+Evaluate the candidate in the following JSON structure. Return ONLY valid JSON.
+MANDATORY RULES:
+1. SPECIFICITY: Only relate to this specific answer.
+2. PROPORTIONALITY: Consider the expected answer type.
+3. LANGUAGE: Evaluation text MUST be in English.
+4. ${interview.isSelfAssessment ? 'Evaluate for concreteness and professional relevance — general statements should receive low scores.' : 'For Yes/No answers, the note is key. Evaluate Yes/No answers without notes briefly and factually.'}
+
+{
+  "overallScore": <0-100>,
+  "overallLabel": "<Excellent|Good|Fair|Poor|Not recommended>",
+  "summary": "<summary>",
+  "recommendation": "<Strongly recommended|Recommended|Consider|Not recommended>",
+  "perAnswer": [ ${perAnswerTemplate} ]
 }`;
+
+    return systemInstructions;
 }
 
 /**
@@ -137,7 +168,7 @@ export async function testApiKey(apiKey) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            contents: [{ parts: [{ text: 'Mondj egy rövid üdvözlő mondatot magyarul.' }] }]
+            contents: [{ parts: [{ text: getLang() === 'hu' ? 'Mondj egy rövid üdvözlő mondatot magyarul.' : 'Say a short welcome sentence in English.' }] }]
         })
     });
     if (!res.ok) {
@@ -176,33 +207,26 @@ export async function generateTurnoverReport(exitInterviews) {
    Egyéb: ${ed.other || '–'}`;
     }).join('\n\n');
 
-    const prompt = `Te egy tapasztalt HR elemző vagy. Az alábbiakban ${exitInterviews.length} kilépő kolléga kilépési kérdőívének összefoglalója látható.
-
+    const lang = getLang();
+    const prompt = lang === 'hu'
+        ? `Te egy tapasztalt HR elemző vagy. Az alábbiakban ${exitInterviews.length} kilépő kolléga kérdőíve látható.
 ${exitSummaries}
-
-Elemzési feladat: Azonosítsd a fő kilépési okokat, a visszatérő mintákat és a konkrét fejlesztési javaslatokat. Adj vissza CSAK valid JSON-t az alábbi struktúrában:
-
+Elemzési feladat: Azonosítsd a mintákat. Adj vissza CSAK valid JSON-t. VÁLASZOLJ MAGYARUL.
 {
-  "summary": "<3-4 mondatos összefoglaló: mi a legfőbb tendencia és mik a legkritikusabb területek>",
-  "mainReasons": [
-    "<1. leggyakoribb / legsúlyosabb ok konkrétan>",
-    "<2. ok>",
-    "<3. ok — max 5 elem>"
-  ],
-  "improvements": [
-    "<1. konkrét, megvalósítható fejlesztési javaslat>",
-    "<2. javaslat>",
-    "<3. javaslat — max 6 elem>"
-  ],
-  "positives": [
-    "<amit a kollégák pozitívként emeltek ki — max 4 elem>"
-  ]
-}
-
-Szabályok:
-- Kizárólag a megadott adatokra alapozz, ne általánosíts
-- Magyar nyelvű válasz
-- Ha valamelyik lista üres lenne (nincs elég adat), írj be egy megfelelő megjegyzést pl. "Nem volt elegendő adat az elemzéshez"`;
+  "summary": "<összefoglaló>",
+  "mainReasons": ["ok1", "ok2"],
+  "improvements": ["javaslat1"],
+  "positives": ["pozitív1"]
+}`
+        : `You are an experienced HR analyst. Below are ${exitInterviews.length} exit interview summaries.
+${exitSummaries}
+Task: Identify patterns. Return ONLY valid JSON. ANSWER IN ENGLISH.
+{
+  "summary": "<summary>",
+  "mainReasons": ["reason1", "reason2"],
+  "improvements": ["improvement1"],
+  "positives": ["positive1"]
+}`;
 
     const res = await fetch(`${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -221,6 +245,63 @@ Szabályok:
     const data = await res.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) throw new Error('Üres válasz érkezett az AI-tól.');
+
+    const cleaned = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+    return JSON.parse(cleaned);
+}
+
+/**
+ * Generates 20 interview questions based on a Job Description.
+ * Returns: Array of { text, answerType }
+ */
+export async function generateInterviewQuestions(jdText, jdPdfBase64) {
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error('NO_API_KEY');
+
+    const lang = getLang();
+    const prompt = lang === 'hu'
+        ? `Te egy profi HR szakértő vagy. Az alábbi munkaköri leírás alapján generálj 20 releváns, szakmai interjúkérdést.
+A kérdések legyenek változatosak: szakmai tapasztalat, soft skillek, szituációs kérdések.
+VÁLASZOLJ MAGYARUL. Adj vissza KIZÁRÓLAG egy JSON tömböt az alábbi formátumban:
+[
+  { "text": "Kérdés szövege", "answerType": "short|detailed" }
+]
+(A "short" legyen a rövid, ténybeli kérdéseknek, a "detailed" a kifejtősöknek.)`
+        : `You are a professional HR expert. Based on the following job description, generate 20 relevant, professional interview questions.
+Questions should be varied: professional experience, soft skills, situational questions.
+ANSWER IN ENGLISH. Return ONLY a JSON array in the following format:
+[
+  { "text": "Question text", "answerType": "short|detailed" }
+]
+("short" for brief/factual questions, "detailed" for open-ended ones.)`;
+
+    const parts = [{ text: prompt }];
+    if (jdPdfBase64) {
+        parts.push({
+            inlineData: { mimeType: 'application/pdf', data: jdPdfBase64 }
+        });
+    }
+    if (jdText) {
+        parts[0].text += `\n\n--- MUNKAKÖRI LEÍRÁS ---\n${jdText}\n--- VÉGE ---`;
+    }
+
+    const res = await fetch(`${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: { temperature: 0.7 }
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('Üres válasz az AI-tól.');
 
     const cleaned = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
     return JSON.parse(cleaned);

@@ -1,7 +1,9 @@
-import { Store } from './store.js?v=14';
+console.log("🚀 app.js v21 loaded");
+import { t, getLang, setLang } from './services/translations.js?v=21';
+import { Store } from './store.js?v=21';
 import { renderLogin } from './views/login.js?v=14';
 import { renderDashboard } from './views/dashboard.js?v=14';
-import { renderRoleManager } from './views/roleManager.js?v=14';
+import { renderRoleManager } from './views/roleManager.js?v=21';
 import { renderInterviewSetup } from './views/interviewSetup.js?v=14';
 import { renderActiveInterview } from './views/activeInterview.js?v=14';
 import { renderCandidateInterview } from './views/candidateInterview.js?v=14';
@@ -82,7 +84,7 @@ class App {
         this.container.innerHTML = `
             <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
                 <div style="width: 2rem; height: 2rem; border: 3px solid var(--accent); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <div style="color: var(--text-secondary); font-weight: 500;">Adatbázis szinkronizálása...</div>
+                <div style="color: var(--text-secondary); font-weight: 500;">${t('app.syncing')}</div>
             </div>
             <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
         `;
@@ -145,11 +147,12 @@ class App {
         // Wait for Firebase Auth to resolve before checking login
         await this.auth.onReady();
 
+        this.updateHeader();
+
         // Guard: require login for all other routes
         if (!window.appAuth.isLoggedIn()) {
             this.navigate('login');
         } else {
-            this.updateHeader();
             this.navigate('dashboard');
         }
     }
@@ -184,32 +187,40 @@ class App {
     updateHeader() {
         const user = window.appAuth.getUser();
         const headerActions = document.querySelector('.header-actions');
-        if (!headerActions || !user) return;
+        if (!headerActions) return;
 
-        const displayName = user.displayName || user.username || 'HR';
-        const displayInitial = displayName.charAt(0).toUpperCase();
-        const role = user.role || 'admin';
+        const displayName = user ? (user.displayName || user.username || 'HR') : '';
+        const displayInitial = displayName ? displayName.charAt(0).toUpperCase() : '';
+        const role = user ? (user.role || 'admin') : '';
+
         headerActions.innerHTML = `
             <div style="display: flex; align-items: center; gap: 1rem;">
-                ${role === 'admin' ? `
-                    <button class="btn btn-secondary" id="btn-stats" style="font-size: 0.8rem; padding: 0.4rem 1rem;">
-                        <i data-lucide="bar-chart-2" style="width: 0.875rem;"></i> Statisztika
-                    </button>
-                    <button class="btn btn-secondary" id="btn-admin" style="font-size: 0.8rem; padding: 0.4rem 1rem;">
-                        <i data-lucide="shield" style="width: 0.875rem;"></i> Admin
+                ${user ? `
+                    ${role === 'admin' ? `
+                        <button class="btn btn-secondary" id="btn-stats" style="font-size: 0.8rem; padding: 0.4rem 1rem;">
+                            <i data-lucide="bar-chart-2" style="width: 0.875rem;"></i> ${t('stats.title')}
+                        </button>
+                        <button class="btn btn-secondary" id="btn-admin" style="font-size: 0.8rem; padding: 0.4rem 1rem;">
+                            <i data-lucide="shield" style="width: 0.875rem;"></i> ${t('role.admin')}
+                        </button>
+                    ` : ''}
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="width: 2rem; height: 2rem; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; color: white;">${displayInitial}</div>
+                        <div style="font-size: 0.875rem;">
+                            <div style="font-weight: 500;">${displayName}</div>
+                            <div style="color: var(--text-secondary); font-size: 0.75rem;">${role === 'admin' ? t('role.admin') : t('role.hr')}</div>
+                        </div>
+                    </div>
+                ` : ''}
+                <button id="lang-toggle" class="btn-icon" title="${t('lang.toggle')}">
+                    <span style="font-size: 0.75rem; font-weight: 600;">${getLang().toUpperCase()}</span>
+                </button>
+                ${user ? `
+                    <button id="btn-logout" class="btn-icon" title="${t('auth.logout')}">
+                        <i data-lucide="log-out" style="width: 1.25rem; height: 1.25rem;"></i>
                     </button>
                 ` : ''}
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 2rem; height: 2rem; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; color: white;">${displayInitial}</div>
-                    <div style="font-size: 0.875rem;">
-                        <div style="font-weight: 500;">${displayName}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.75rem;">${role === 'admin' ? 'Admin' : 'HR Kolléga'}</div>
-                    </div>
-                </div>
-                <button id="btn-logout" class="btn-icon" title="Kijelentkezés">
-                    <i data-lucide="log-out" style="width: 1.25rem; height: 1.25rem;"></i>
-                </button>
-                <button id="theme-toggle" class="btn-icon" aria-label="Téma váltása">
+                <button id="theme-toggle" class="btn-icon" aria-label="${t('theme.toggle')}">
                     <i data-lucide="sun" class="icon-light"></i>
                     <i data-lucide="moon" class="icon-dark"></i>
                 </button>
@@ -217,7 +228,17 @@ class App {
         `;
         lucide.createIcons();
 
-        // Re-attach theme toggle (since updateHeader replaced the DOM node)
+        // Attach listeners
+        const langBtn = document.getElementById('lang-toggle');
+        if (langBtn) {
+            langBtn.addEventListener('click', () => {
+                const current = getLang();
+                const next = current === 'hu' ? 'en' : 'hu';
+                setLang(next);
+                location.reload();
+            });
+        }
+
         const themeBtn = document.getElementById('theme-toggle');
         if (themeBtn) {
             themeBtn.addEventListener('click', () => {
@@ -228,32 +249,17 @@ class App {
             });
         }
 
-        document.getElementById('btn-logout')?.addEventListener('click', () => {
-            window.appAuth.logout();
-            // Reset header to default
-            headerActions.innerHTML = `
-                <button id="theme-toggle" class="btn-icon" aria-label="Téma váltása">
-                    <i data-lucide="sun" class="icon-light"></i>
-                    <i data-lucide="moon" class="icon-dark"></i>
-                </button>
-            `;
-            // Re-attach theme toggle
-            document.getElementById('theme-toggle').addEventListener('click', () => {
-                const root = document.documentElement;
-                const newTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                root.setAttribute('data-theme', newTheme);
-                localStorage.setItem('hr_theme', newTheme);
+        if (user) {
+            document.getElementById('btn-logout')?.addEventListener('click', () => {
+                window.appAuth.logout();
             });
-            lucide.createIcons();
-            this.navigate('login');
-        });
-
-        document.getElementById('btn-admin')?.addEventListener('click', () => {
-            this.navigate('adminPanel');
-        });
-        document.getElementById('btn-stats')?.addEventListener('click', () => {
-            this.navigate('hrStats');
-        });
+            document.getElementById('btn-admin')?.addEventListener('click', () => {
+                this.navigate('adminPanel');
+            });
+            document.getElementById('btn-stats')?.addEventListener('click', () => {
+                this.navigate('hrStats');
+            });
+        }
     }
 
     navigate(viewName, params = {}) {

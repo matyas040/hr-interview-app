@@ -160,6 +160,17 @@ export class Store {
         }
     }
 
+    setRoleQuestions(roleId, questions) {
+        const role = this.getRoleById(roleId);
+        if (role) {
+            role.questions = questions.map(q => ({
+                id: 'q_' + Math.random().toString(36).substr(2, 9),
+                ...q
+            }));
+            setDoc(doc(db, 'roles', role.id), role);
+        }
+    }
+
     updateRolePdf(roleId, pdfBase64, pdfName) {
         const role = this.getRoleById(roleId);
         if (role) {

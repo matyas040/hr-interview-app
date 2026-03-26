@@ -1,43 +1,45 @@
+import { t, getLang } from '../services/translations.js?v=20';
+
 export function renderInterviewSetup(container, params = {}) {
     const roleId = params.roleId;
     const role = window.appStore.getRoleById(roleId);
 
     if (!role) {
-        container.innerHTML = `<p>Hiba: Nincs ilyen munkakör.</p><button class="btn btn-secondary mt-4" onclick="window.navigateTo('dashboard')">Vissza</button>`;
+        container.innerHTML = `<p>${t('error.no_role')}</p><button class="btn btn-secondary mt-4" onclick="window.navigateTo('dashboard')">${t('common.back')}</button>`;
         return;
     }
 
     container.innerHTML = `
         <div class="mb-6">
             <button class="btn btn-secondary mb-4" onclick="window.navigateTo('dashboard')">
-                <i data-lucide="arrow-left"></i> Vissza az irányítópultra
+                <i data-lucide="arrow-left"></i> ${t('role.back')}
             </button>
-            <h2 style="font-size: 1.5rem; font-weight: 600;">Interjú előkészítése</h2>
-            <p style="color: var(--text-secondary);" class="mt-1">Munkakör: <strong style="color: var(--text-primary);">${role.title}</strong></p>
+            <h2 style="font-size: 1.5rem; font-weight: 600;">${t('setup.title')}</h2>
+            <p style="color: var(--text-secondary);" class="mt-1">${getLang() === 'hu' ? 'Munkakör' : 'Role'}: <strong style="color: var(--text-primary);">${role.title}</strong></p>
         </div>
 
         <div class="card" style="max-width: 600px; margin: 0 auto;">
             <div class="form-group">
-                <label class="form-label">Jelölt neve</label>
+                <label class="form-label">${t('setup.candidate_name')}</label>
                 <input type="text" id="candidate-name" class="form-input" placeholder="pl. Kovács János" autocomplete="off" autofocus>
             </div>
             
             <div class="form-group">
-                <label class="form-label">Interjú dátuma</label>
+                <label class="form-label">${t('setup.interview_date')}</label>
                 <input type="datetime-local" id="interview-date" class="form-input" value="${new Date().toISOString().slice(0, 16)}">
             </div>
 
             <div class="mt-6 flex justify-between items-center">
                 <p style="font-size: 0.875rem; color: var(--text-secondary);">
                     <i data-lucide="list-checks" style="width: 1rem; height: 1rem; vertical-align: middle;"></i> 
-                    ${role.questions.length} kérdés lesz feltéve
+                    ${role.questions.length} ${t('setup.questions_count')}
                 </p>
                 <div style="display: flex; gap: 1rem;">
                     <button class="btn btn-secondary" id="btn-generate-link">
-                        <i data-lucide="link"></i> Link generálása
+                        <i data-lucide="link"></i> ${t('setup.copy_link')}
                     </button>
                     <button class="btn btn-primary" id="btn-start-interview">
-                        <i data-lucide="play"></i> Interjú megkezdése
+                        <i data-lucide="play"></i> ${t('setup.start_manual')}
                     </button>
                 </div>
             </div>
@@ -51,7 +53,7 @@ export function renderInterviewSetup(container, params = {}) {
         const date = document.getElementById('interview-date').value;
 
         if (!candidateName) {
-            alert('Kérlek add meg a jelölt nevét!');
+            alert(t('setup.error_name'));
             document.getElementById('candidate-name').focus();
             return;
         }
@@ -67,7 +69,7 @@ export function renderInterviewSetup(container, params = {}) {
         const candidateName = document.getElementById('candidate-name').value.trim();
 
         if (!candidateName) {
-            alert('A link generálásához is szükséges egy azonosító név!');
+            alert(t('setup.error_name'));
             document.getElementById('candidate-name').focus();
             return;
         }
@@ -80,9 +82,9 @@ export function renderInterviewSetup(container, params = {}) {
         const url = `${baseUrl}?candidate=1&role=${encodeURIComponent(roleId)}&name=${encodeURIComponent(candidateName)}&issuedBy=${encodeURIComponent(issuedById)}&issuedByName=${encodeURIComponent(issuedByName)}`;
         
         navigator.clipboard.writeText(url).then(() => {
-            alert(`A link a vágólapra másolva!\nElküldheted a jelöltnek: ${candidateName}\n\nURL: ${url}`);
+            alert(`${t('setup.link_copied')}\n\nURL: ${url}`);
         }).catch(err => {
-            prompt("Másold ki a linket alul:", url);
+            prompt("URL:", url);
         });
     });
 }
