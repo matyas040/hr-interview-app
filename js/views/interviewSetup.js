@@ -1,4 +1,4 @@
-import { t, getLang } from '../services/translations.js?v=36';
+import { t, getLang } from '../services/translations.js?v=37';
 
 export function renderInterviewSetup(container, params = {}) {
     const roleId = params.roleId;
@@ -28,6 +28,14 @@ export function renderInterviewSetup(container, params = {}) {
                 <label class="form-label">${t('setup.interview_date')}</label>
                 <input type="datetime-local" id="interview-date" class="form-input" value="${new Date().toISOString().slice(0, 16)}">
             </div>
+            
+            <div class="form-group mb-0">
+                <label class="form-label">${t('setup.mode_label')}</label>
+                <select id="interview-mode" class="form-input">
+                    <option value="hr">${t('setup.mode_hr')}</option>
+                    <option value="candidate">${t('setup.mode_candidate')}</option>
+                </select>
+            </div>
 
             <div class="mt-6 flex justify-between items-center">
                 <p style="font-size: 0.875rem; color: var(--text-secondary);">
@@ -51,6 +59,7 @@ export function renderInterviewSetup(container, params = {}) {
     document.getElementById('btn-start-interview').addEventListener('click', () => {
         const candidateName = document.getElementById('candidate-name').value.trim();
         const date = document.getElementById('interview-date').value;
+        const mode = document.getElementById('interview-mode').value;
 
         if (!candidateName) {
             alert(t('setup.error_name'));
@@ -61,7 +70,8 @@ export function renderInterviewSetup(container, params = {}) {
         window.navigateTo('activeInterview', {
             roleId,
             candidateName,
-            date
+            date,
+            isTextMode: mode === 'candidate'
         });
     });
 

@@ -1,4 +1,4 @@
-import { t, getLang } from '../services/translations.js?v=36';
+import { t, getLang } from '../services/translations.js?v=37';
 
 export function renderDashboard(container) {
     const roles = window.appStore.getRoles();
@@ -46,8 +46,8 @@ export function renderDashboard(container) {
                         const roleTitle = isExit ? t('dashboard.exit_interview') : (role ? role.title : t('dashboard.unknown_role'));
                         const dateStr = new Date(inv.date).toLocaleString(getLang() === 'hu' ? 'hu-HU' : 'en-US');
                         const durationMins = Math.floor(inv.duration / 60);
-                        const typeIcon  = isExit ? 'log-out' : (inv.isSelfAssessment ? 'laptop' : 'users');
-                        const typeColor = isExit ? 'var(--danger)' : (inv.isSelfAssessment ? 'var(--warning)' : 'var(--accent)');
+                        const typeIcon  = isExit ? 'log-out' : (inv.isTextMode ? 'file-edit' : (inv.isSelfAssessment ? 'laptop' : 'users'));
+                        const typeColor = isExit ? 'var(--danger)' : (inv.isTextMode ? 'var(--accent)' : (inv.isSelfAssessment ? 'var(--warning)' : 'var(--accent)'));
 
                         // Hire status badge for non-exit
                         const hireStatus = inv.hireStatus || 'pending';

@@ -39,9 +39,20 @@ function buildPrompt(interview, role) {
         return `${i + 1}. ${qLabel} (ID: ${q.id}) ${typeLabel}: ${q.text}\n   ${aLabel}: ${answerText}${a.note ? `\n   ${nLabel}: ` + a.note : ''}`;
     }).join('\n\n');
 
-    const context = interview.isSelfAssessment
-        ? (lang === 'hu' ? `Ez egy önálló kitöltős kérdőív. A jelölt saját maga töltötte ki írásban.` : `This is a self-assessment questionnaire. The candidate filled it out in writing.`)
-        : (lang === 'hu' ? `Ez egy HR-es által lebonyolított interjú. Igen/Nem/Nem releváns válaszok vannak rögzítve.` : `This is an interview conducted by HR. Yes/No/Not relevant answers are recorded.`);
+    let context = '';
+    if (interview.isTextMode) {
+        context = lang === 'hu' 
+            ? `Ez egy felügyelt szakmai interjú, ahol a jelölt írásban válaszolt a kérdésekre. Értékeld objektíven, szakmai szemmel.`
+            : `This is a supervised professional interview where the candidate provided written answers. Evaluate objectively from a professional perspective.`;
+    } else if (interview.isSelfAssessment) {
+        context = lang === 'hu' 
+            ? `Ez egy önálló kitöltős kérdőív. A jelölt saját maga töltötte ki írásban.` 
+            : `This is a self-assessment questionnaire. The candidate filled it out in writing.`;
+    } else {
+        context = lang === 'hu' 
+            ? `Ez egy HR-es által lebonyolított interjú. Igen/Nem/Nem releváns válaszok vannak rögzítve.` 
+            : `This is an interview conducted by HR. Yes/No/Not relevant answers are recorded.`;
+    }
 
     const perAnswerTemplate = role.questions.map(q => `{
       "questionId": "${q.id}",

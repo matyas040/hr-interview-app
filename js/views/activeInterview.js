@@ -1,7 +1,7 @@
-import { t, getLang } from '../services/translations.js?v=36';
+import { t, getLang } from '../services/translations.js?v=37';
 
 export function renderActiveInterview(container, params = {}) {
-    const { roleId, candidateName, date } = params;
+    const { roleId, candidateName, date, isTextMode = false } = params;
     const role = window.appStore.getRoleById(roleId);
 
     if (!role || role.questions.length === 0) {
@@ -18,10 +18,10 @@ export function renderActiveInterview(container, params = {}) {
     let timerInterval = null;
     let secondsElapsed = 0;
     
-    // answers format: { qId: { value: 'yes'|'no'|'na', note: '' } }
+    // answers format: { qId: { value: 'yes'|'no'|'na', note: '', text: '' } }
     let answers = {};
     role.questions.forEach(q => {
-        answers[q.id] = { value: null, note: '' };
+        answers[q.id] = { value: null, note: '', text: '' };
     });
 
     const formatTime = (secs) => {
@@ -160,22 +160,32 @@ export function renderActiveInterview(container, params = {}) {
                 <div class="card mb-6" style="padding: 2rem;">
                     <h3 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 2rem; line-height: 1.6;">${question.text}</h3>
                     
-                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;" id="answer-buttons">
-                        <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'yes' ? 'active-yes' : ''}" data-val="yes" style="flex: 1; padding: 1rem; font-size: 1rem;">
-                            <i data-lucide="check-circle-2"></i> ${getLang()==='hu'?'Igen':'Yes'}
-                        </button>
-                        <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'no' ? 'active-no' : ''}" data-val="no" style="flex: 1; padding: 1rem; font-size: 1rem;">
-                            <i data-lucide="x-circle"></i> ${getLang()==='hu'?'Nem':'No'}
-                        </button>
-                        <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'na' ? 'active-na' : ''}" data-val="na" style="flex: 1; padding: 1rem; font-size: 1rem;">
-                            <i data-lucide="help-circle"></i> N/A
-                        </button>
-                    </div>
+                    ${isTextMode ? `
+                        <div class="form-group mb-0">
+                            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i data-lucide="edit-3" style="width: 1rem; height: 1rem;"></i> 
+                                ${getLang()==='hu'?'Jelölt válasza':'Candidate answer'}
+                            </label>
+                            <textarea id="q-text" class="form-textarea" placeholder="${getLang()==='hu'?'Gépeld ide a válaszod...':'Type your answer here...'}" style="min-height: 200px; font-size: 1.1rem;">${answers[question.id].text || ''}</textarea>
+                        </div>
+                    ` : `
+                        <div style="display: flex; gap: 1rem; margin-bottom: 2rem;" id="answer-buttons">
+                            <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'yes' ? 'active-yes' : ''}" data-val="yes" style="flex: 1; padding: 1rem; font-size: 1rem;">
+                                <i data-lucide="check-circle-2"></i> ${getLang()==='hu'?'Igen':'Yes'}
+                            </button>
+                            <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'no' ? 'active-no' : ''}" data-val="no" style="flex: 1; padding: 1rem; font-size: 1rem;">
+                                <i data-lucide="x-circle"></i> ${getLang()==='hu'?'Nem':'No'}
+                            </button>
+                            <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'na' ? 'active-na' : ''}" data-val="na" style="flex: 1; padding: 1rem; font-size: 1rem;">
+                                <i data-lucide="help-circle"></i> N/A
+                            </button>
+                        </div>
 
-                    <div class="form-group mb-0">
-                        <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="message-square" style="width: 1rem; height: 1rem;"></i> ${t('eval.hr_note')} ${getLang()==='hu'?'(opcionális)':'(optional)'}</label>
-                        <textarea id="q-note" class="form-textarea" placeholder="${getLang()==='hu'?'Írd ide a jelölt válaszának részleteit...':'Write details of the candidate\'s answer here...'}">${answers[question.id].note}</textarea>
-                    </div>
+                        <div class="form-group mb-0">
+                            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="message-square" style="width: 1rem; height: 1rem;"></i> ${t('eval.hr_note')} ${getLang()==='hu'?'(opcionális)':'(optional)'}</label>
+                            <textarea id="q-note" class="form-textarea" placeholder="${getLang()==='hu'?'Írd ide a jelölt válaszának részleteit...':'Write details of the candidate\'s answer here...'}">${answers[question.id].note}</textarea>
+                        </div>
+                    `}
                 </div>
 
                 <!-- Navigation Controls -->
@@ -218,6 +228,14 @@ export function renderActiveInterview(container, params = {}) {
             });
         }
 
+        // Save Text on blur or change
+        const textEl = document.getElementById('q-text');
+        if(textEl) {
+            textEl.addEventListener('change', (e) => {
+                answers[qId].text = e.target.value;
+            });
+        }
+
         // Answer buttons
         document.querySelectorAll('.ans-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -230,7 +248,11 @@ export function renderActiveInterview(container, params = {}) {
 
         // Prev
         document.getElementById('btn-prev')?.addEventListener('click', () => {
-            answers[qId].note = document.getElementById('q-note').value;
+            if (isTextMode) {
+                answers[qId].text = document.getElementById('q-text').value;
+            } else {
+                answers[qId].note = document.getElementById('q-note').value;
+            }
             if (currentIndex > 0) {
                 currentIndex--;
                 render();
@@ -239,7 +261,11 @@ export function renderActiveInterview(container, params = {}) {
 
         // Next
         document.getElementById('btn-next')?.addEventListener('click', () => {
-            answers[qId].note = document.getElementById('q-note').value;
+            if (isTextMode) {
+                answers[qId].text = document.getElementById('q-text').value;
+            } else {
+                answers[qId].note = document.getElementById('q-note').value;
+            }
             if (currentIndex < totalQuestions - 1) {
                 currentIndex++;
                 render();
@@ -248,7 +274,11 @@ export function renderActiveInterview(container, params = {}) {
 
         // Finish
         document.getElementById('btn-finish')?.addEventListener('click', () => {
-            answers[qId].note = document.getElementById('q-note').value; // save last
+            if (isTextMode) {
+                answers[qId].text = document.getElementById('q-text').value;
+            } else {
+                answers[qId].note = document.getElementById('q-note').value; // save last
+            }
             stopTimer();
             
             // Save to store
@@ -260,7 +290,8 @@ export function renderActiveInterview(container, params = {}) {
                 duration: secondsElapsed,
                 personalData,
                 answers,
-                isSelfAssessment: false,
+                isSelfAssessment: isTextMode, // Key change: if Hybrid Mode (text), AI treats it as self-assessment format but with objective perspective
+                isTextMode,
                 issuedBy: window.appAuth.getUser()?.id || '',
                 issuedByName: window.appAuth.getUser()?.displayName || ''
             });

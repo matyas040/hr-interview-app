@@ -81,6 +81,9 @@ export const translations = {
         'setup.copy_link': 'Link generálása',
         'setup.link_copied': 'A link a vágólapra másolva!',
         'setup.error_name': 'Kérlek add meg a jelölt nevét!',
+        'setup.mode_label': 'Interjú típusa',
+        'setup.mode_hr': 'HR vezeti (Igen/Nem gombok)',
+        'setup.mode_candidate': 'Jelölt gépel (Részletes szöveges)',
 
         // Candidate / Active Interview
         'iv.welcome': 'Üdvözöljük!',
@@ -323,7 +326,10 @@ export const translations = {
         'setup.start_manual': 'Start Interview',
         'setup.copy_link': 'Generate Link',
         'setup.link_copied': 'Link copied to clipboard!',
-        'setup.error_name': 'Please enter candidate name!',
+        'setup.error_name': 'Please enter the candidate\'s name!',
+        'setup.mode_label': 'Interview Type',
+        'setup.mode_hr': 'HR-led (Yes/No buttons)',
+        'setup.mode_candidate': 'Candidate typing (Detailed text)',
 
         // Candidate / Active Interview
         'iv.welcome': 'Welcome!',
