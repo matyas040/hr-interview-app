@@ -1,6 +1,5 @@
-console.log("🛠️ roleManager.js v21 loaded");
-import { t, getLang } from '../services/translations.js?v=21';
-import { generateInterviewQuestions } from '../services/aiService.js?v=20';
+import { t, getLang } from '../services/translations.js?v=23';
+import { generateInterviewQuestions } from '../services/aiService.js?v=23';
 
 export function renderRoleManager(container, params = {}) {
     const render = () => {

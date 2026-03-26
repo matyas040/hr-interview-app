@@ -1,4 +1,3 @@
-console.log("🚀 app.js v23 loaded");
 import { t, getLang, setLang } from './services/translations.js?v=23';
 import { Store } from './store.js?v=23';
 import { renderLogin } from './views/login.js?v=14';
