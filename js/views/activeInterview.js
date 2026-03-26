@@ -1,4 +1,4 @@
-import { t } from '../services/translations.js?v=20';
+import { t } from '../services/translations.js?v=31';
 
 export function renderActiveInterview(container, params = {}) {
     const { roleId, candidateName, date } = params;

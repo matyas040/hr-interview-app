@@ -20,7 +20,7 @@ function buildPrompt(interview, role) {
     const qas = role.questions.map((q, i) => {
         const a = interview.answers[q.id] || {};
         let answerText = '';
-        if (isSelf) {
+        if (interview.isSelfAssessment) {
             answerText = a.text || (lang === 'hu' ? '(nem válaszolt)' : '(no answer)');
         } else {
             const map = lang === 'hu' 

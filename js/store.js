@@ -26,6 +26,7 @@ export class Store {
         this.roles = [];
         this.interviews = [];
         this.users = [];
+        this.exitQuestions = [];
         this.initialized = false;
     }
 
@@ -34,19 +35,18 @@ export class Store {
         
         console.log("🏪 Store: Firestore szinkronizáció indítása...");
         
-        // Helper to add timeout to promises
         const timeout = (ms) => new Promise((_, reject) => 
             setTimeout(() => reject(new Error("Firebase időtúllépés: Ellenőrizd a Firestore Database 'Rules' fülét!")), ms)
         );
 
         try {
             console.log("🏪 Store: Kollekciók lekérése folyamatban...");
-            // Load initial data from Firestore with a 10s timeout
-            const [rolesSnap, interviewsSnap, usersSnap] = await Promise.race([
+            const [rolesSnap, interviewsSnap, usersSnap, exitQsSnap] = await Promise.race([
                 Promise.all([
                     getDocs(collection(db, 'roles')),
                     getDocs(collection(db, 'interviews')),
-                    getDocs(collection(db, 'users'))
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'exitQuestions'))
                 ]),
                 timeout(10000)
             ]);
@@ -55,6 +55,7 @@ export class Store {
             this.roles = rolesSnap.docs.map(d => d.data());
             this.interviews = interviewsSnap.docs.map(d => d.data());
             this.users = usersSnap.docs.map(d => d.data());
+            this.exitQuestions = exitQsSnap.docs.map(d => d.data()).sort((a,b) => (a.order || 0) - (b.order || 0));
 
             // Seed default admin if no users exist
             if (this.users.length === 0) {
@@ -78,6 +79,22 @@ export class Store {
                 };
                 this.roles.push(dummyRole);
                 await setDoc(doc(db, 'roles', dummyRole.id), dummyRole);
+            }
+
+            // Seed default exit questions if empty
+            if (this.exitQuestions.length === 0) {
+                console.log("🏪 Store: Alapértelmezett kilépő kérdések létrehozása...");
+                const defaults = [
+                    { id: 'exq_1', text: 'Mi volt a távozásod elsődleges oka?', type: 'select', options: 'Jobb ajánlat,Karrier fejlődés,Vezetői problémák,Bérezés,Munka-magánélet,Költözés,Egyéb', order: 1 },
+                    { id: 'exq_2', text: 'Melyik részlegen dolgoztál?', type: 'text', order: 2 },
+                    { id: 'exq_3', text: 'Mi tetszett a legjobban a munkádban / cégben?', type: 'text', order: 3 },
+                    { id: 'exq_4', text: 'Milyen területen kellene fejlődnünk véleményed szerint?', type: 'text', order: 4 },
+                    { id: 'exq_5', text: 'Ajánlanád a céget másoknak is?', type: 'radio', options: 'Igen,Talán,Nem', order: 5 }
+                ];
+                for (const q of defaults) {
+                    this.exitQuestions.push(q);
+                    await setDoc(doc(db, 'exitQuestions', q.id), q);
+                }
             }
 
             this.initialized = true;
@@ -217,6 +234,37 @@ export class Store {
             delete role.jdFileName;
             setDoc(doc(db, 'roles', role.id), role);
         }
+    }
+
+    // -- Exit Interview Questions --
+    getExitQuestions() {
+        return this.exitQuestions.sort((a,b) => (a.order || 0) - (b.order || 0));
+    }
+
+    addExitQuestion(text, type, options = '', order = 0) {
+        const newQ = {
+            id: 'exq_' + Date.now().toString(36),
+            text,
+            type,
+            options,
+            order: order || (this.exitQuestions.length + 1)
+        };
+        this.exitQuestions.push(newQ);
+        setDoc(doc(db, 'exitQuestions', newQ.id), newQ);
+        return newQ;
+    }
+
+    updateExitQuestion(id, patch) {
+        const q = this.exitQuestions.find(x => x.id === id);
+        if (q) {
+            Object.assign(q, patch);
+            setDoc(doc(db, 'exitQuestions', q.id), q);
+        }
+    }
+
+    deleteExitQuestion(id) {
+        this.exitQuestions = this.exitQuestions.filter(x => x.id !== id);
+        deleteDoc(doc(db, 'exitQuestions', id));
     }
 
     // -- Interviews --
