@@ -1,5 +1,5 @@
-import { t, getLang } from '../services/translations.js?v=26';
-import { generateInterviewQuestions } from '../services/aiService.js?v=26';
+import { t, getLang } from '../services/translations.js?v=27';
+import { generateInterviewQuestions } from '../services/aiService.js?v=27';
 
 export function renderRoleManager(container, params = {}) {
     const render = () => {
@@ -10,84 +10,85 @@ export function renderRoleManager(container, params = {}) {
         const isFullView = params.fullView === true;
 
         container.innerHTML = `
-            <div class="simple-role-manager ${isFullView ? 'full-width' : ''}">
-                <div class="flex justify-between items-center mb-8">
-                    <div style="flex: 1; min-width: 0;">
-                        <button class="btn-back mb-2" onclick="window.navigateTo('dashboard')">
-                            <i data-lucide="arrow-left" style="width: 14px;"></i> ${t('role.back')}
+            <div class="role-manager-v27 ${isFullView ? 'mode-full' : 'mode-split'}">
+                <!-- TOP NAV BAR -->
+                <nav class="role-nav">
+                    <div class="nav-left">
+                        <button class="nav-back" onclick="window.navigateTo('dashboard')">
+                            <i data-lucide="chevron-left"></i> ${t('role.back')}
                         </button>
-                        <h2 class="page-title">${t('role.title')}</h2>
                     </div>
-                    ${!isFullView ? `
-                        <button class="btn btn-primary" id="btn-add-role">
-                            <i data-lucide="plus"></i> ${t('role.add_new')}
-                        </button>
-                    ` : ''}
-                </div>
+                    <div class="nav-right">
+                        ${!isFullView ? `
+                            <button class="btn-minimal" id="btn-add-role">
+                                <i data-lucide="plus"></i> ${getLang() === 'hu' ? 'Új munkakör' : 'New Role'}
+                            </button>
+                        ` : `
+                            <button class="btn-minimal" id="btn-exit-full">
+                                <i data-lucide="x"></i> ${getLang() === 'hu' ? 'Bezárás' : 'Close'}
+                            </button>
+                        `}
+                    </div>
+                </nav>
 
-                <div class="role-layout ${isFullView ? 'full' : 'split'}">
-                    <!-- Sidebar: Roles (Hidden in Full View) -->
+                <div class="role-content">
+                    <!-- SIDEBAR (only in split mode) -->
                     ${!isFullView ? `
-                        <aside class="simple-sidebar">
-                            <h3 class="sidebar-label">${t('role.list_title')}</h3>
-                            <div class="role-scroller">
+                        <aside class="role-sidebar-v27">
+                            <h3 class="group-label">${t('role.list_title')}</h3>
+                            <div class="role-list-v27">
                                 ${roles.map(r => `
-                                    <div class="role-item-mini ${r.id === activeRoleId ? 'active' : ''}" data-id="${r.id}">
+                                    <div class="role-pivot ${r.id === activeRoleId ? 'is-active' : ''}" data-id="${r.id}">
                                         <span class="title">${r.title}</span>
-                                        <span class="count">${r.questions.length} questions</span>
+                                        <span class="meta">${r.questions.length} ${getLang() === 'hu' ? 'kérdés' : 'questions'}</span>
                                     </div>
                                 `).join('')}
                             </div>
                         </aside>
                     ` : ''}
 
-                    <!-- Main: Editor -->
-                    <main class="editor-area">
+                    <!-- MAIN EDITOR AREA -->
+                    <main class="role-main-v27">
                         ${activeRole ? `
-                            <div class="edit-card ${isFullView ? 'full-p' : ''}">
+                            <div class="role-canvas">
                                 ${isFullView ? `
-                                    <!-- FULL VIEW: Reordered Layout -->
-                                    <header class="full-header mb-10">
-                                        <div class="flex justify-between items-center w-full mb-6">
-                                            <button class="btn-back-small" id="btn-exit-full">
-                                                <i data-lucide="arrow-left"></i> ${getLang() === 'hu' ? 'Vissza az áttekintéshez' : 'Back to overview'}
+                                    <!-- FULL MANAGEMENT VIEW -->
+                                    <header class="canvas-header-full">
+                                        <h1 class="canvas-title">${activeRole.title}</h1>
+                                        <div class="canvas-actions">
+                                            <button class="btn-action-minimal danger" id="btn-delete-role">
+                                                <i data-lucide="trash-2"></i> ${getLang() === 'hu' ? 'Munkakör törlése' : 'Delete Role'}
                                             </button>
-                                            <div class="flex items-center gap-2">
-                                                <button class="btn btn-icon-del" id="btn-delete-role"><i data-lucide="trash-2"></i></button>
-                                            </div>
                                         </div>
-                                        <h3 class="full-role-title">${activeRole.title}</h3>
                                     </header>
 
-                                    <!-- TOP: INPUT & AI -->
-                                    <div class="full-top-controls mb-12">
-                                        <div class="control-grid">
-                                            <div class="control-box">
-                                                <h4 class="control-label">${getLang() === 'hu' ? 'Új kérdés hozzáadása' : 'Add new question'}</h4>
-                                                <div class="add-q-bar">
-                                                    <input type="text" id="new-q-input" class="new-q-field" placeholder="${t('role.q_placeholder')}">
-                                                    <button class="btn btn-primary" id="btn-add-q">
-                                                        <i data-lucide="plus"></i>
-                                                    </button>
-                                                </div>
+                                    <!-- FULL VIEW TOOLS -->
+                                    <div class="canvas-tools">
+                                        <div class="tool-section">
+                                            <label class="tool-label">${getLang() === 'hu' ? 'Kérdés hozzáadása' : 'Add Question'}</label>
+                                            <div class="premium-input-group">
+                                                <input type="text" id="new-q-input" class="premium-field" placeholder="${t('role.q_placeholder')}">
+                                                <button class="btn-premium-action" id="btn-add-q">
+                                                    <i data-lucide="plus"></i>
+                                                </button>
                                             </div>
+                                        </div>
 
-                                            <div class="control-box">
-                                                <h4 class="control-label">${t('role.jd_title')} & AI</h4>
+                                        <div class="tool-section">
+                                            <label class="tool-label">${t('role.jd_title')} & AI</label>
+                                            <div class="flex gap-4 items-center">
                                                 ${activeRole.jdFileName ? `
-                                                    <div class="flex gap-2">
-                                                        <div class="jd-pill-mini">
-                                                            <i data-lucide="file-text"></i>
-                                                            <span>${activeRole.jdFileName}</span>
-                                                            <button class="btn-pill-del" id="btn-remove-jd"><i data-lucide="x"></i></button>
-                                                        </div>
-                                                        <button class="btn btn-ai-action" id="btn-generate-qs">
-                                                            <i data-lucide="sparkles"></i> ${t('role.jd_generate')}
-                                                        </button>
+                                                    <div class="jd-marker">
+                                                        <i data-lucide="file-check"></i>
+                                                        <span>${activeRole.jdFileName}</span>
+                                                        <button class="jd-clear" id="btn-remove-jd"><i data-lucide="x"></i></button>
                                                     </div>
+                                                    <button class="btn-ai-v27" id="btn-generate-qs">
+                                                        <i data-lucide="sparkles"></i> ${t('role.jd_generate')}
+                                                    </button>
                                                 ` : `
-                                                    <label class="simple-upload-mini">
-                                                        <i data-lucide="upload"></i> ${getLang() === 'hu' ? 'Leírás feltöltése AI-hoz' : 'Upload JD for AI'}
+                                                    <label class="premium-upload">
+                                                        <i data-lucide="cloud-upload"></i> ${getLang() === 'hu' ? 'Leírás feltöltése AI generáláshoz...' : 'Upload JD for AI generation...'}
                                                         <input type="file" accept=".pdf,.txt,.docx" id="jd-upload-input" hidden>
                                                     </label>
                                                 `}
@@ -95,24 +96,24 @@ export function renderRoleManager(container, params = {}) {
                                         </div>
                                     </div>
 
-                                    <!-- BOTTOM: QUESTION LIST -->
-                                    <section class="questions-full">
-                                        <div class="flex items-center justify-between mb-6 border-b pb-4">
-                                            <h4 class="section-title">${t('role.questions')}</h4>
-                                            <span class="badge-count">${activeRole.questions.length}</span>
+                                    <!-- FULL QUESTION LIST -->
+                                    <section class="canvas-list-full">
+                                        <div class="list-header">
+                                            <h3>${t('role.questions')}</h3>
+                                            <span class="count-pill">${activeRole.questions.length}</span>
                                         </div>
-                                        <div id="questions-list" class="q-stack-full">
+                                        <div class="q-grid-v27">
                                             ${activeRole.questions.map((q, index) => `
-                                                <div class="q-item-full">
-                                                    <div class="q-lead">${index + 1}</div>
-                                                    <div class="q-body-full">
-                                                        <input type="text" class="q-input-full" data-qid="${q.id}" value="${q.text}">
-                                                        <div class="q-actions">
-                                                            <select class="q-type-select-mini" data-qid="${q.id}">
-                                                                <option value="short" ${(q.answerType || 'detailed') === 'short' ? 'selected' : ''}>${getLang() === 'hu' ? 'Rövid' : 'Short'}</option>
-                                                                <option value="detailed" ${(q.answerType || 'detailed') === 'detailed' ? 'selected' : ''}>${getLang() === 'hu' ? 'Részletes' : 'Detailed'}</option>
-                                                            </select>
-                                                            <button class="btn-q-del" data-qid="${q.id}"><i data-lucide="trash-2"></i></button>
+                                                <div class="q-card-v27">
+                                                    <div class="q-num">${index + 1}</div>
+                                                    <div class="q-main">
+                                                        <textarea class="q-edit-area" data-qid="${q.id}">${q.text}</textarea>
+                                                        <div class="q-footer">
+                                                            <div class="q-type-selector">
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'short' ? 'active' : ''}" data-qid="${q.id}" data-type="short">Rövid</button>
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'detailed' ? 'active' : ''}" data-qid="${q.id}" data-type="detailed">Részletes</button>
+                                                            </div>
+                                                            <button class="q-trash" data-qid="${q.id}"><i data-lucide="trash-2"></i></button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -120,47 +121,44 @@ export function renderRoleManager(container, params = {}) {
                                         </div>
                                     </section>
                                 ` : `
-                                    <!-- MAIN VIEW: 3 Questions Summary -->
-                                    <section class="editor-header mb-8">
-                                        <div style="flex: 1; min-width: 0;">
-                                            <input type="text" id="role-title-input" class="role-title-input" value="${activeRole.title}">
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <button class="btn btn-success" id="btn-save-role">${t('role.save')}</button>
-                                            <button class="btn-icon-del" id="btn-delete-role"><i data-lucide="trash-2"></i></button>
-                                        </div>
-                                    </section>
+                                    <!-- SIMPLE OVERVIEW VIEW -->
+                                    <header class="canvas-header">
+                                        <input type="text" id="role-title-input" class="role-title-minimal" value="${activeRole.title}">
+                                        <button class="btn-save-minimal" id="btn-save-role">${getLang() === 'hu' ? 'Mentés' : 'Save'}</button>
+                                    </header>
 
-                                    <section class="summary-area mb-8">
-                                        <h4 class="sidebar-label mb-4">${t('role.questions')} (3 legutóbbi)</h4>
-                                        <div class="q-preview-list">
+                                    <section class="canvas-summary">
+                                        <div class="flex justify-between items-center mb-6">
+                                            <h4 class="canvas-label">${t('role.questions')} (3 legutóbbi)</h4>
+                                            <button class="btn-link" id="btn-open-full">
+                                                ${getLang() === 'hu' ? 'Összes kezelése' : 'Manage all'} <i data-lucide="arrow-right"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="q-preview-stack">
                                             ${activeRole.questions.length > 0 ? 
                                                 activeRole.questions.slice(-3).reverse().map(q => `
-                                                    <div class="q-preview-item">
-                                                        <i data-lucide="help-circle"></i>
-                                                        <p class="text">${q.text}</p>
+                                                    <div class="q-mini-row">
+                                                        <div class="q-bullet"></div>
+                                                        <p class="q-text">${q.text}</p>
                                                     </div>
                                                 `).join('') 
-                                                : `<div class="empty-state-small">${t('role.no_questions')}</div>`
+                                                : `<div class="empty-state-v27">${t('role.no_questions')}</div>`
                                             }
                                         </div>
-                                        
-                                        <div class="add-q-bar mt-6">
-                                            <input type="text" id="new-q-input" class="new-q-field" placeholder="${t('role.q_placeholder')}">
-                                            <button class="btn btn-primary" id="btn-add-q">
+
+                                        <div class="quick-add-v27">
+                                            <input type="text" id="new-q-input" class="field-v27" placeholder="${t('role.q_placeholder')}">
+                                            <button class="btn-add-v27" id="btn-add-q">
                                                 <i data-lucide="plus"></i>
                                             </button>
                                         </div>
                                     </section>
-
-                                    <button class="btn btn-secondary w-full" id="btn-open-full">
-                                        <i data-lucide="maximize-2"></i> ${getLang() === 'hu' ? 'Teljes szerkesztés és AI generálás' : 'Full edit & AI generation'}
-                                    </button>
                                 `}
                             </div>
                         ` : `
-                            <div class="empty-placeholder">
-                                <i data-lucide="briefcase"></i>
+                            <div class="empty-canvas">
+                                <i data-lucide="layout"></i>
                                 <p>${t('role.select_role')}</p>
                             </div>
                         `}
@@ -169,76 +167,93 @@ export function renderRoleManager(container, params = {}) {
             </div>
 
             <style>
-                .simple-role-manager { max-width: 1100px; margin: 0 auto; transition: all 0.3s ease; }
-                .simple-role-manager.full-width { max-width: 100%; padding: 0 2rem; }
+                .role-manager-v27 { max-width: 1400px; margin: 0 auto; color: var(--text-primary); min-height: 80vh; display: flex; flex-direction: column; }
                 
-                .page-title { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin-top: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                /* Nav Bar */
+                .role-nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); }
+                .nav-back { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
+                .nav-back:hover { color: var(--accent); }
+                .btn-minimal { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 12px; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 600; cursor: pointer; background: white; }
+                .btn-minimal:hover { border-color: var(--accent); background: var(--bg-primary); }
 
-                .role-layout { display: grid; gap: 3rem; align-items: flex-start; }
-                .role-layout.split { grid-template-columns: 280px 1fr; }
-                .role-layout.full { grid-template-columns: 1fr; }
+                /* Layout */
+                .role-content { display: flex; gap: 4rem; flex: 1; }
+                .mode-full .role-content { display: block; }
                 
                 /* Sidebar */
-                .sidebar-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); font-weight: 700; margin-bottom: 1rem; }
-                .role-scroller { display: flex; flex-direction: column; gap: 0.5rem; }
-                .role-item-mini { 
-                    padding: 1rem; border-radius: 12px; cursor: pointer; transition: all 0.2s;
-                    display: flex; flex-direction: column; border: 1px solid var(--border-color); background: white;
+                .role-sidebar-v27 { width: 300px; flex-shrink: 0; }
+                .group-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem; }
+                .role-list-v27 { display: flex; flex-direction: column; gap: 0.75rem; }
+                .role-pivot { 
+                    padding: 1.25rem; border-radius: 16px; background: white; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.3s ease;
+                    display: flex; flex-direction: column; gap: 0.25rem;
                 }
-                .role-item-mini:hover { border-color: var(--accent-soft); transform: translateY(-2px); }
-                .role-item-mini.active { border-color: var(--accent); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
-                .role-item-mini .title { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
-                .role-item-mini .count { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.4rem; font-weight: 500; }
-                .role-item-mini.active .title { color: var(--accent); }
+                .role-pivot:hover { transform: translateX(5px); border-color: var(--accent-light); }
+                .role-pivot.is-active { border-color: var(--accent); box-shadow: 0 10px 30px rgba(197, 160, 89, 0.08); }
+                .role-pivot .title { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
+                .role-pivot .meta { font-size: 0.75rem; color: var(--text-secondary); }
+                .role-pivot.is-active .title { color: var(--accent); }
 
-                /* Editor Card */
-                .edit-card { background: white; border-radius: 20px; border: 1px solid var(--border-color); padding: 2.5rem; box-shadow: 0 15px 40px rgba(0,0,0,0.03); }
-                .edit-card.full-p { padding: 3rem; }
+                /* Main Canvas */
+                .role-main-v27 { flex: 1; min-width: 0; }
+                .role-canvas { background: white; border-radius: 24px; border: 1px solid var(--border-color); padding: 3rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+                .mode-full .role-canvas { padding: 4rem; border: none; background: transparent; box-shadow: none; }
+
+                .role-title-minimal { width: 100%; border: none; font-size: 2.4rem; font-weight: 800; color: var(--text-primary); outline: none; background: transparent; }
+                .canvas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; gap: 2rem; }
+                .btn-save-minimal { font-size: 0.85rem; font-weight: 700; color: var(--accent); text-transform: uppercase; cursor: pointer; padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--accent); }
+                .btn-save-minimal:hover { background: var(--accent); color: white; }
+
+                .canvas-label { font-size: 0.85rem; font-weight: 800; color: var(--text-secondary); }
+                .btn-link { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700; color: var(--accent); cursor: pointer; }
+                .btn-link:hover { text-decoration: underline; }
+
+                .q-preview-stack { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 3rem; }
+                .q-mini-row { display: flex; gap: 1rem; align-items: flex-start; padding: 1.25rem; background: var(--bg-primary); border-radius: 16px; border: 1px solid rgba(0,0,0,0.02); }
+                .q-bullet { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-top: 0.6rem; flex-shrink: 0; }
+                .q-text { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); line-height: 1.5; }
+
+                .quick-add-v27 { display: flex; align-items: center; gap: 1rem; padding: 0.5rem; background: var(--bg-primary); border-radius: 16px; border: 1px dashed var(--border-color); }
+                .field-v27 { flex: 1; border: none; background: transparent; padding: 1rem; font-size: 0.95rem; outline: none; font-weight: 600; }
+                .btn-add-v27 { width: 48px; height: 48px; border-radius: 12px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+                /* Full View Elements */
+                .canvas-header-full { display: flex; justify-content: space-between; items-center; margin-bottom: 4rem; }
+                .canvas-title { font-size: 3rem; font-weight: 800; color: var(--text-primary); }
+                .btn-action-minimal { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; }
+                .btn-action-minimal.danger:hover { color: var(--danger); }
+
+                .canvas-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 5rem; padding: 2.5rem; background: white; border-radius: 24px; border: 1px solid var(--border-color); }
+                .tool-section { display: flex; flex-direction: column; gap: 1rem; }
+                .tool-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; }
+
+                .premium-input-group { display: flex; gap: 0.5rem; background: var(--bg-primary); padding: 0.5rem; border-radius: 16px; border: 1px solid var(--border-color); }
+                .premium-field { flex: 1; border: none; background: transparent; padding: 0.75rem 1rem; font-size: 0.95rem; outline: none; font-weight: 600; }
+                .btn-premium-action { width: 42px; height: 42px; border-radius: 10px; background: var(--text-primary); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+                .jd-marker { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.25rem; border-radius: 14px; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent); font-size: 0.85rem; font-weight: 700; }
+                .jd-clear { border: none; background: transparent; color: var(--accent); cursor: pointer; margin-left: 0.5rem; }
+                .btn-ai-v27 { padding: 0.75rem 1.5rem; border-radius: 14px; background: var(--accent-gradient); color: white; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; box-shadow: var(--shadow-glow); }
+                .premium-upload { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem; border: 2px dashed var(--border-color); border-radius: 16px; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+                .premium-upload:hover { border-color: var(--accent); color: var(--accent); }
+
+                /* Full Question Cards */
+                .list-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 3rem; }
+                .list-header h3 { font-size: 1.5rem; font-weight: 800; }
+                .count-pill { padding: 0.25rem 0.75rem; background: var(--bg-primary); border-radius: 8px; font-size: 0.85rem; font-weight: 800; border: 1px solid var(--border-color); }
                 
-                .role-title-input { 
-                    width: 100%; border: none; font-size: 1.8rem; font-weight: 800; color: var(--text-primary); 
-                    outline: none; background: transparent; padding: 0.5rem 0; border-bottom: 2px solid transparent;
-                }
-                .role-title-input:focus { border-color: var(--accent-soft); }
-                .full-role-title { font-size: 2.2rem; font-weight: 800; color: var(--text-primary); margin-top: 1rem; }
-
-                /* Overview Preview */
-                .q-preview-list { display: flex; flex-direction: column; gap: 0.75rem; }
-                .q-preview-item { 
-                    display: flex; gap: 0.75rem; padding: 1rem; background: var(--bg-primary); 
-                    border-radius: 12px; border: 1px solid rgba(0,0,0,0.03); align-items: center;
-                }
-                .q-preview-item i { width: 16px; height: 16px; color: var(--accent); flex-shrink: 0; }
-                .q-preview-item .text { font-size: 0.85rem; font-weight: 500; color: var(--text-primary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-                /* Full View Controls */
-                .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-                .control-box { background: var(--bg-primary); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); }
-                .control-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: var(--text-secondary); margin-bottom: 1rem; letter-spacing: 0.05em; }
-
-                /* Questions List Full */
-                .q-stack-full { display: flex; flex-direction: column; gap: 1rem; }
-                .q-item-full { display: flex; gap: 1rem; padding: 1.25rem; border-radius: 12px; background: white; border: 1px solid var(--border-color); transition: all 0.2s; }
-                .q-item-full:hover { border-color: var(--accent-light); box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
-                .q-lead { width: 32px; height: 32px; border-radius: 10px; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: var(--text-secondary); flex-shrink: 0; }
-                .q-body-full { flex: 1; display: flex; flex-direction: column; gap: 0.75rem; }
-                .q-input-full { width: 100%; border: none; font-size: 1rem; font-weight: 500; color: var(--text-primary); outline: none; background: transparent; }
-                .q-actions { display: flex; items-center gap: 1.5rem; border-top: 1px solid rgba(0,0,0,0.03); pt-3; margin-top: 0.2rem; }
-                .q-type-select-mini { background: transparent; border: none; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
-
-                .add-q-bar { display: flex; gap: 0.75rem; padding: 0.5rem; background: white; border-radius: 12px; border: 1px solid var(--border-color); }
-                .new-q-field { flex: 1; border: none; background: transparent; padding: 0.5rem; font-size: 0.9rem; outline: none; font-weight: 500; }
-
-                .jd-pill-mini { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 8px; background: white; border: 1px solid var(--border-color); font-size: 0.75rem; font-weight: 600; }
-                .btn-ai-action { background: var(--accent); color: white; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
-                .btn-ai-action:hover { opacity: 0.9; }
-                .simple-upload-mini { border: 1px dashed var(--accent); border-radius: 8px; padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem; color: var(--accent); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-
-                .btn-icon-del { width: 42px; height: 42px; border-radius: 12px; border: none; background: rgba(239, 68, 68, 0.05); color: var(--danger); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-                .btn-icon-del:hover { background: var(--danger); color: white; }
-
-                .btn-back-small { background: rgba(0,0,0,0.03); border: none; color: var(--text-secondary); height: 32px; padding: 0 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; }
-                .btn-back-small:hover { background: var(--accent-light); color: var(--accent); }
+                .q-grid-v27 { display: grid; gap: 2rem; }
+                .q-card-v27 { display: flex; gap: 1.5rem; padding: 2rem; border-radius: 20px; background: white; border: 1px solid var(--border-color); transition: all 0.3s ease; }
+                .q-card-v27:hover { border-color: var(--accent-light); box-shadow: 0 10px 40px rgba(0,0,0,0.03); }
+                .q-num { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 800; color: var(--text-secondary); flex-shrink: 0; }
+                .q-main { flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
+                .q-edit-area { width: 100%; border: none; font-size: 1.1rem; font-weight: 500; line-height: 1.6; color: var(--text-primary); outline: none; background: transparent; resize: none; min-height: 60px; }
+                .q-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1.25rem; }
+                .q-type-selector { display: flex; gap: 0.5rem; background: var(--bg-primary); padding: 0.25rem; border-radius: 10px; }
+                .type-btn { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; }
+                .type-btn.active { background: white; color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                .q-trash { font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; }
+                .q-trash:hover { color: var(--danger); }
 
                 @keyframes spin { to { transform: rotate(360deg); } }
                 .spin { animation: spin 1s linear infinite; display: inline-block; }
@@ -250,7 +265,7 @@ export function renderRoleManager(container, params = {}) {
     };
 
     const attachEvents = (activeRole, isFullView) => {
-        container.querySelectorAll('.role-item-mini').forEach(el => {
+        container.querySelectorAll('.role-pivot').forEach(el => {
             el.addEventListener('click', (e) => {
                 params.roleId = e.currentTarget.dataset.id;
                 render();
@@ -288,19 +303,22 @@ export function renderRoleManager(container, params = {}) {
                 }
             });
 
-            container.querySelectorAll('.q-input-full').forEach(el => {
+            container.querySelectorAll('.q-edit-area').forEach(el => {
                 el.addEventListener('change', (e) => {
                     window.appStore.updateQuestion(activeRole.id, e.currentTarget.dataset.qid, e.currentTarget.value.trim());
                 });
             });
 
-            container.querySelectorAll('.q-type-select-mini').forEach(el => {
-                el.addEventListener('change', (e) => {
-                    window.appStore.updateQuestionType(activeRole.id, e.currentTarget.dataset.qid, e.currentTarget.value);
+            container.querySelectorAll('.type-btn').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const qId = e.currentTarget.dataset.qid;
+                    const type = e.currentTarget.dataset.type;
+                    window.appStore.updateQuestionType(activeRole.id, qId, type);
+                    render();
                 });
             });
 
-            container.querySelectorAll('.btn-q-del').forEach(el => {
+            container.querySelectorAll('.q-trash').forEach(el => {
                 el.addEventListener('click', (e) => {
                     window.appStore.deleteQuestion(activeRole.id, e.currentTarget.dataset.qid);
                     render();
