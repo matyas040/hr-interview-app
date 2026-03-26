@@ -1,4 +1,4 @@
-import { t, getLang } from '../services/translations.js?v=35';
+import { t, getLang } from '../services/translations.js?v=36';
 
 export function renderDashboard(container) {
     const roles = window.appStore.getRoles();

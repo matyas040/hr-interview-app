@@ -1,5 +1,5 @@
-import { t, getLang } from '../services/translations.js?v=35';
-import { generateInterviewQuestions } from '../services/aiService.js?v=35';
+import { t, getLang } from '../services/translations.js?v=36';
+import { generateInterviewQuestions } from '../services/aiService.js?v=36';
 
 export function renderRoleManager(container, params = {}) {
     const render = () => {
