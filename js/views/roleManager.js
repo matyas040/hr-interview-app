@@ -110,23 +110,23 @@ export function renderRoleManager(container, params = {}) {
                                                         <textarea class="q-edit-area" data-qid="${q.id}" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'">${q.text}</textarea>
                                                         <div class="q-footer">
                                                             <div class="q-type-selector" style="flex-wrap: wrap; gap: 6px; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%;">
-                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'short' ? 'active' : ''}" data-qid="${q.id}" data-type="short" title="${t('qtype.short')}">
-                                                                    <i data-lucide="align-left" style="width:12px;"></i> ${t('qtype.short').split(' ')[0]}
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'short' ? 'active' : ''}" data-qid="${q.id}" data-type="short">
+                                                                    <i data-lucide="align-left" style="width:12px;"></i> ${getLang()==='hu'?'Rövid':'Short'}
                                                                 </button>
-                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'detailed' ? 'active' : ''}" data-qid="${q.id}" data-type="detailed" title="${t('qtype.detailed')}">
-                                                                    <i data-lucide="align-justify" style="width:12px;"></i> ${t('qtype.detailed').split(' ')[0]}
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'detailed' ? 'active' : ''}" data-qid="${q.id}" data-type="detailed">
+                                                                    <i data-lucide="align-justify" style="width:12px;"></i> ${getLang()==='hu'?'Kifejtős':'Detailed'}
                                                                 </button>
-                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'number' ? 'active' : ''}" data-qid="${q.id}" data-type="number" title="${t('qtype.number')}">
-                                                                    <i data-lucide="hash" style="width:12px;"></i> ${t('qtype.number')}
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'number' ? 'active' : ''}" data-qid="${q.id}" data-type="number">
+                                                                    <i data-lucide="hash" style="width:12px;"></i> ${getLang()==='hu'?'Szám':'Number'}
                                                                 </button>
-                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'date' ? 'active' : ''}" data-qid="${q.id}" data-type="date" title="${t('qtype.date')}">
-                                                                    <i data-lucide="calendar" style="width:12px;"></i> ${t('qtype.date')}
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'date' ? 'active' : ''}" data-qid="${q.id}" data-type="date">
+                                                                    <i data-lucide="calendar" style="width:12px;"></i> ${getLang()==='hu'?'Dátum':'Date'}
                                                                 </button>
-                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'yes-no' ? 'active' : ''}" data-qid="${q.id}" data-type="yes-no" title="${t('qtype.yes-no')}">
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'yes-no' ? 'active' : ''}" data-qid="${q.id}" data-type="yes-no">
                                                                     <i data-lucide="toggle-left" style="width:12px;"></i> I/N
                                                                 </button>
-                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'yes-no-reason' ? 'active' : ''}" data-qid="${q.id}" data-type="yes-no-reason" title="${t('qtype.yes-no-reason')}">
-                                                                    <i data-lucide="file-question" style="width:12px;"></i> I/N+
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'yes-no-reason' ? 'active' : ''}" data-qid="${q.id}" data-type="yes-no-reason">
+                                                                    <i data-lucide="file-question" style="width:12px;"></i> I/N + Indok
                                                                 </button>
                                                             </div>
                                                             <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; margin-top: 0.5rem;">

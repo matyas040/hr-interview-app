@@ -2,7 +2,7 @@
 import { getLang } from './translations.js';
 
 const GEMINI_MODEL = 'gemini-1.5-flash';
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1/models';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 export function getApiKey() {
     return localStorage.getItem('hr_gemini_api_key') || 'AIzaSyDa30rkAtF5R6UPC83FXzG1TEPz6EScyW0';
