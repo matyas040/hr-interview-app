@@ -1,8 +1,8 @@
 // ─── Gemini AI Service ────────────────────────────────────────────────────────
 import { getLang } from './translations.js';
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GEMINI_MODEL = 'models/gemini-1.5-flash';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 export function getApiKey() {
     return localStorage.getItem('hr_gemini_api_key') || 'AIzaSyDa30rkAtF5R6UPC83FXzG1TEPz6EScyW0';
