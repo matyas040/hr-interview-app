@@ -1,11 +1,11 @@
 // ─── Gemini AI Service ────────────────────────────────────────────────────────
 import { getLang } from './translations.js';
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-1.5-flash';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1/models';
 
 export function getApiKey() {
-    return localStorage.getItem('hr_gemini_api_key') || 'AIzaSyAxHUNFt0ewF7rn4nRAr5J7tzjQHZGG-aA';
+    return localStorage.getItem('hr_gemini_api_key') || 'AIzaSyDa30rkAtF5R6UPC83FXzG1TEPz6EScyW0';
 }
 
 export function setApiKey(key) {
@@ -20,38 +20,53 @@ function buildPrompt(interview, role) {
     const qas = role.questions.map((q, i) => {
         const a = interview.answers[q.id] || {};
         let answerText = '';
-        if (interview.isSelfAssessment) {
-            answerText = a.text || (lang === 'hu' ? '(nem válaszolt)' : '(no answer)');
+        const type = q.answerType || 'detailed';
+
+        if (type === 'yes-no') {
+            const map = lang === 'hu' ? { yes: 'Igen', no: 'Nem', na: 'N/A' } : { yes: 'Yes', no: 'No', na: 'N/A' };
+            answerText = map[a.value] || (lang === 'hu' ? 'Nincs válasz' : 'No answer');
+        } else if (type === 'yes-no-reason') {
+            const map = lang === 'hu' ? { yes: 'Igen', no: 'Nem', na: 'N/A' } : { yes: 'Yes', no: 'No', na: 'N/A' };
+            const val = map[a.value] || (lang === 'hu' ? 'Nincs választva' : 'Not selected');
+            answerText = `${val}${a.note ? ` (${lang === 'hu' ? 'Indoklás' : 'Reason'}: ${a.note})` : ''}`;
+        } else if (type === 'date') {
+            answerText = a.text || (lang === 'hu' ? 'Nincs megadva' : 'Not specified');
+        } else if (type === 'number') {
+            answerText = a.text || '0';
         } else {
-            const map = lang === 'hu' 
-                ? { yes: 'Igen', no: 'Nem', na: 'Nem releváns' }
-                : { yes: 'Yes', no: 'No', na: 'Not relevant' };
-            answerText = map[a.value] || (lang === 'hu' ? 'Nincs megadva' : 'Not specified');
+            // short, detailed, or legacy
+            answerText = a.text || a.note || (lang === 'hu' ? '(nem válaszolt)' : '(no answer)');
         }
-        const typeLabel = q.answerType === 'short' 
-            ? (lang === 'hu' ? '[RÖVID VÁLASZ ELVÁRT]' : '[SHORT ANSWER EXPECTED]')
-            : (lang === 'hu' ? '[RÉSZLETES VÁLASZ ELVÁRT]' : '[DETAILED ANSWER EXPECTED]');
+        
+        const typeLabels = {
+            'date': lang === 'hu' ? '[DÁTUM]' : '[DATE]',
+            'number': lang === 'hu' ? '[SZÁM]' : '[NUMBER]',
+            'short': lang === 'hu' ? '[RÖVID VÁLASZ]' : '[SHORT ANSWER]',
+            'detailed': lang === 'hu' ? '[RÉSZLETES KIFEJTÉS]' : '[DETAILED EXPLANATION]',
+            'yes-no': lang === 'hu' ? '[IGEN/NEM]' : '[YES/NO]',
+            'yes-no-reason': lang === 'hu' ? '[IGEN/NEM + INDOKLÁS]' : '[YES/NO + REASON]'
+        };
+        const typeLabel = typeLabels[type] || '';
         
         const qLabel = lang === 'hu' ? 'Kérdés' : 'Question';
         const aLabel = lang === 'hu' ? 'Válasz' : 'Answer';
-        const nLabel = lang === 'hu' ? 'Megjegyzés' : 'Note';
 
-        return `${i + 1}. ${qLabel} (ID: ${q.id}) ${typeLabel}: ${q.text}\n   ${aLabel}: ${answerText}${a.note ? `\n   ${nLabel}: ` + a.note : ''}`;
+        return `${i + 1}. ${qLabel}: ${q.text} ${typeLabel}\n   ${aLabel}: ${answerText}`;
     }).join('\n\n');
 
     let context = '';
     if (interview.isTextMode) {
         context = lang === 'hu' 
-            ? `Ez egy felügyelt szakmai interjú, ahol a jelölt írásban válaszolt a kérdésekre. Értékeld objektíven, szakmai szemmel.`
-            : `This is a supervised professional interview where the candidate provided written answers. Evaluate objectively from a professional perspective.`;
+            ? `Ez egy hibrid interjú (írógépes/felügyelt). Értékeld a szakmaiságot és a válaszok mélységét.`
+            : `This is a hybrid interview (supervised typing). Evaluate professionalism and depth of answers.`;
     } else if (interview.isSelfAssessment) {
         context = lang === 'hu' 
-            ? `Ez egy önálló kitöltős kérdőív. A jelölt saját maga töltötte ki írásban.` 
-            : `This is a self-assessment questionnaire. The candidate filled it out in writing.`;
+            ? `Ez egy önállóan kitöltött kérdőív a jelölt által.` 
+            : `This is a self-assessment questionnaire filled out by the candidate.`;
     } else {
         context = lang === 'hu' 
-            ? `Ez egy HR-es által lebonyolított interjú. Igen/Nem/Nem releváns válaszok vannak rögzítve.` 
-            : `This is an interview conducted by HR. Yes/No/Not relevant answers are recorded.`;
+            ? `Ez egy HR által vezetett interjú, ahol különböző típusú válaszok lettek rögzítve.` 
+            : `This is an HR-led interview where various types of answers were recorded.`;
     }
 
     const perAnswerTemplate = role.questions.map(q => `{
@@ -65,10 +80,10 @@ function buildPrompt(interview, role) {
 
     const jdContext = role.jdText
         ? `\n\n--- MUNKAKÖRI LEÍRÁS (az értékelés alapja) ---\n${role.jdText.slice(0, 4000)}\n--- VÉGE ---`
-        : (role.jdPdfBase64 ? '\n\n[A munkaköri leírás PDF-ben csatolva van az üzenet mellé — vedd figyelembe az értékelésnél!]' : '');
+        : (role.jdPdfBase64 ? '\n\n[A munkaköri leírás PDF-ben csatolva van — vedd figyelembe az elvárásoknál!]' : '');
 
     const systemInstructions = lang === 'hu' 
-        ? `Te egy tapasztalt HR elemző vagy. Feladatod egy interjú értékelése. VÁLASZOLJ MAGYARUL.
+        ? `Te egy profi HR elemző vagy. Feladatod egy interjú kiértékelése a megadott munkakörhöz. VÁLASZOLJ MAGYARUL.
 KONTEXTUS: ${context}
 MUNKAKÖR: ${role.title}${jdContext}
 JELÖLT: ${interview.candidateName}
@@ -79,10 +94,9 @@ ${qas}
 
 Értékeld a jelöltet az alábbi JSON struktúrában. CSAK valid JSON-t adj vissza.
 KÖTELEZŐ SZABÁLYOK:
-1. SPECIFIKUSSÁG: Csak erre a válaszra vonatkozzon.
-2. ARÁNYOSSÁG: Vedd figyelembe az elvárt válasz típusát.
-3. NYELV: Az értékelés szövege magyar legyen.
-4. ${interview.isSelfAssessment ? 'Értékeld a konkrétságot és szakmai relevanciát — általános kijelentések alacsony pontot érjenek.' : 'Igen/Nem esetén a megjegyzés a lényeg. Megjegyzés nélküli igen/nem választ röviden és tárgyszerűen értékelj.'}
+1. SPECIFIKUSSÁG: Csak az adott válaszokat vizsgáld.
+2. NYELV: Az értékelés szövege magyar legyen.
+3. FORMÁTUM: Vedd figyelembe a válasz típusát (pl. egy szám vagy dátum relevanciáját a munkakörhöz).
 
 {
   "overallScore": <0-100>,
@@ -91,7 +105,7 @@ KÖTELEZŐ SZABÁLYOK:
   "recommendation": "<Erősen ajánlott|Ajánlott|Megfontolásra ajánlott|Nem ajánlott>",
   "perAnswer": [ ${perAnswerTemplate} ]
 }`
-        : `You are an experienced HR analyst. Your task is to evaluate an interview. ANSWER IN ENGLISH.
+        : `You are a professional HR analyst. Evaluate the interview for the given role. ANSWER IN ENGLISH.
 CONTEXT: ${context}
 ROLE: ${role.title}${jdContext}
 CANDIDATE: ${interview.candidateName}
@@ -102,10 +116,9 @@ ${qas}
 
 Evaluate the candidate in the following JSON structure. Return ONLY valid JSON.
 MANDATORY RULES:
-1. SPECIFICITY: Only relate to this specific answer.
-2. PROPORTIONALITY: Consider the expected answer type.
-3. LANGUAGE: Evaluation text MUST be in English.
-4. ${interview.isSelfAssessment ? 'Evaluate for concreteness and professional relevance — general statements should receive low scores.' : 'For Yes/No answers, the note is key. Evaluate Yes/No answers without notes briefly and factually.'}
+1. SPECIFICITY: Only evaluate the provided answers.
+2. LANGUAGE: Evaluation text MUST be in English.
+3. FORMAT: Consider the type of the answer (e.g., relevance of a number or date to the role).
 
 {
   "overallScore": <0-100>,

@@ -137,38 +137,51 @@ function renderAiErrorCard(errorMsg, interviewId) {
 // ─── Q&A Section ─────────────────────────────────────────────────────────────
 
 function renderAnswerFeedback(q, ansData, aiPerAnswer, isSelf) {
-    if (isSelf) {
-        const pa = aiPerAnswer?.find(p => p.questionId === q.id);
-        const ansColor = pa ? scoreColor(pa.score) : 'var(--border-color)';
+    const type = q.answerType || 'detailed';
+    const pa = aiPerAnswer?.find(p => p.questionId === q.id);
+    const ansColor = pa ? scoreColor(pa.score) : 'var(--border-color)';
 
-        return `
-            <div style="margin-top: 0.75rem;">
-                ${ansData.text
-                    ? `<div style="background: var(--bg-primary); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--accent); white-space: pre-wrap; font-size: 0.9375rem; line-height: 1.6; margin-bottom: 0.75rem;">${ansData.text}</div>`
-                    : `<p style="color: var(--text-secondary); font-style: italic; margin-bottom: 0.75rem;">${t('eval.ans_none')}</p>`}
-                ${pa ? `
+    let displayHtml = '';
+
+    if (type === 'yes-no' || type === 'yes-no-reason') {
+        let badge = '';
+        if      (ansData.value === 'yes') badge = `<span style="background:rgba(16,185,129,0.1);color:var(--success);padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.75rem;font-weight:600;">${getLang()==='hu'?'Igen':'Yes'}</span>`;
+        else if (ansData.value === 'no')  badge = `<span style="background:rgba(239,68,68,0.1);color:var(--danger);padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.75rem;font-weight:600;">${getLang()==='hu'?'Nem':'No'}</span>`;
+        else if (ansData.value === 'na')  badge = `<span style="background:rgba(245,158,11,0.1);color:var(--warning);padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.75rem;font-weight:600;">N/A</span>`;
+        else badge = `<span style="background:var(--border-color);color:var(--text-secondary);padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.75rem;font-weight:600;">${getLang()==='hu'?'Nincs megadva':'Not specified'}</span>`;
+        
+        displayHtml = `<div>${badge}</div>`;
+        if (type === 'yes-no-reason' && ansData.note) {
+            displayHtml += `<div style="background:var(--bg-primary);padding:1rem;border-radius:var(--radius-md);margin-top:0.75rem;font-size:0.875rem;"><span style="color:var(--text-secondary);font-weight:500;display:block;margin-bottom:0.25rem;">${t('eval.hr_note') || 'Note'}:</span>${ansData.note}</div>`;
+        } else if (ansData.note && !isSelf) {
+            // Legacy/Optional notes in HR mode
+            displayHtml += `<div style="background:var(--bg-primary);padding:1rem;border-radius:var(--radius-md);margin-top:0.75rem;font-size:0.875rem;"><span style="color:var(--text-secondary);font-weight:500;display:block;margin-bottom:0.25rem;">${t('eval.hr_note')}:</span>${ansData.note}</div>`;
+        }
+    } else {
+        // Text based: short, detailed, date, number
+        const val = ansData.text || ansData.note;
+        displayHtml = val
+            ? `<div style="background: var(--bg-primary); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--accent); white-space: pre-wrap; font-size: 0.9375rem; line-height: 1.6; margin-bottom: 0.75rem;">${val}</div>`
+            : `<p style="color: var(--text-secondary); font-style: italic; margin-bottom: 0.75rem;">${t('eval.ans_none')}</p>`;
+    }
+
+    // AI Feedback part
+    let aiHtml = '';
+    if (pa) {
+        aiHtml = `
+            <div style="margin-top: 0.75rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
                 <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
                     <span style="background: ${ansColor}18; color: ${ansColor}; border: 1px solid ${ansColor}40; border-radius: 1rem; padding: 0.2rem 0.65rem; font-size: 0.72rem; font-weight: 700;">${pa.score}/100 — ${pa.grade}</span>
                     ${pa.summary ? `<span style="font-size: 0.72rem; color: var(--text-secondary); font-style: italic;">${pa.summary}</span>` : ''}
                 </div>
-                ${pa.positives?.length > 0 ? `<div style="margin-bottom: 0.3rem;">${pa.positives.map(p => `<div style="font-size: 0.78rem; color: #15803d; display: flex; gap: 0.35rem; margin-bottom: 0.15rem;"><span>✓</span><span>${p}</span></div>`).join('')}</div>` : ''}
-                ${pa.negatives?.length > 0 ? `<div>${pa.negatives.map(n => `<div style="font-size: 0.78rem; color: #b91c1c; display: flex; gap: 0.35rem; margin-bottom: 0.15rem;"><span>✗</span><span>${n}</span></div>`).join('')}</div>` : ''}
-                ` : ''}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    ${pa.positives?.length > 0 ? `<div>${pa.positives.map(p => `<div style="font-size: 0.75rem; color: #15803d; display: flex; gap: 0.35rem; margin-bottom: 0.15rem;"><span>✓</span><span>${p}</span></div>`).join('')}</div>` : ''}
+                    ${pa.negatives?.length > 0 ? `<div>${pa.negatives.map(n => `<div style="font-size: 0.75rem; color: #b91c1c; display: flex; gap: 0.35rem; margin-bottom: 0.15rem;"><span>✗</span><span>${n}</span></div>`).join('')}</div>` : ''}
+                </div>
             </div>`;
     }
 
-    // HR-led
-    let badge = '';
-    if      (ansData.value === 'yes') badge = `<span style="background:rgba(16,185,129,0.1);color:var(--success);padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.75rem;font-weight:600;">${getLang()==='hu'?'Igen':'Yes'}</span>`;
-    else if (ansData.value === 'no')  badge = `<span style="background:rgba(239,68,68,0.1);color:var(--danger);padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.75rem;font-weight:600;">${getLang()==='hu'?'Nem':'No'}</span>`;
-    else if (ansData.value === 'na')  badge = `<span style="background:rgba(245,158,11,0.1);color:var(--warning);padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.75rem;font-weight:600;">N/A</span>`;
-    else badge = `<span style="background:var(--border-color);color:var(--text-secondary);padding:0.25rem 0.75rem;border-radius:1rem;font-size:0.75rem;font-weight:600;">${getLang()==='hu'?'Nincs megadva':'Not specified'}</span>`;
-
-    const noteHtml = ansData.note
-        ? `<div style="background:var(--bg-primary);padding:1rem;border-radius:var(--radius-md);margin-top:0.75rem;font-size:0.875rem;"><span style="color:var(--text-secondary);font-weight:500;display:block;margin-bottom:0.25rem;">${t('eval.hr_note')}:</span>${ansData.note}</div>`
-        : '';
-
-    return badge + noteHtml;
+    return displayHtml + aiHtml;
 }
 
 // ─── Exit Interview Display ───────────────────────────────────────────────────
@@ -275,10 +288,14 @@ export async function renderEvaluation(container, params = {}) {
         let earned = 0, max = 0, strengths = [], weaknesses = [], neutral = [];
         role.questions.forEach(q => {
             const a = interview.answers[q.id] || {};
-            max += 2;
-            if (a.value === 'yes')     { earned += 2; strengths.push(q.text); }
-            else if (a.value === 'na') { earned += 1; neutral.push(q.text); }
-            else if (a.value === 'no') { weaknesses.push(q.text); }
+            const type = q.answerType || 'detailed';
+            // Only count in objective score if it's a binary/trinary type
+            if (type === 'yes-no' || type === 'yes-no-reason') {
+                max += 2;
+                if (a.value === 'yes')     { earned += 2; strengths.push(q.text); }
+                else if (a.value === 'na') { earned += 1; neutral.push(q.text); }
+                else if (a.value === 'no') { weaknesses.push(q.text); }
+            }
         });
         const sc = max > 0 ? Math.round((earned / max) * 100) : 0;
         const co = scoreColor(sc);
@@ -335,7 +352,7 @@ export async function renderEvaluation(container, params = {}) {
             ${hrScoreHtml}
 
         <!-- AI score card placeholder (filled async) -->
-        ${interview.isSelfAssessment ? renderAiLoadingCard() : ''}
+        ${renderAiLoadingCard()}
 
         <!-- Personal + Hire -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
@@ -486,7 +503,7 @@ export async function renderEvaluation(container, params = {}) {
     });
 
     // ── AI Analysis ───────────────────────────────────────────────────────────
-    if (interview.isSelfAssessment && role) {
+    if (role) {
         const aiCard = document.getElementById('ai-score-card');
 
         const runAiAnalysis = async (forceRefresh = false) => {

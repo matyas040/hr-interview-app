@@ -25,7 +25,7 @@ export function renderCandidateInterview(container, params = {}) {
     let startTime = null;
     
     let answers = {};
-    role.questions.forEach(q => { answers[q.id] = { text: '' }; });
+    role.questions.forEach(q => { answers[q.id] = { value: null, note: '', text: '' }; });
 
     const render = () => {
         container.innerHTML = '';
@@ -207,25 +207,67 @@ export function renderCandidateInterview(container, params = {}) {
                 <div class="card mb-6" style="padding: 2.5rem;">
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem;">
                         <h3 style="font-size: 1.5rem; font-weight: 500; line-height: 1.6; flex: 1;">${question.text}</h3>
-                        ${question.answerType === 'short'
-                            ? `<span style="flex-shrink: 0; background: rgba(245,158,11,0.12); color: #d97706; border: 1px solid rgba(245,158,11,0.3); border-radius: 1rem; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; white-space: nowrap; margin-top: 0.25rem;">⚡ ${getLang()==='hu'?'Rövid válasz':'Short answer'}</span>`
-                            : `<span style="flex-shrink: 0; background: rgba(59,130,246,0.1); color: var(--accent); border: 1px solid rgba(59,130,246,0.25); border-radius: 1rem; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; white-space: nowrap; margin-top: 0.25rem;">📝 ${getLang()==='hu'?'Részletes válasz':'Detailed answer'}</span>`
-                        }
                     </div>
-                    <div class="form-group mb-0">
-                        <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
-                            <i data-lucide="edit-3" style="width: 1rem; height: 1rem;"></i> ${getLang()==='hu'?'Válaszod':'Your answer'}
-                            ${question.answerType === 'short'
-                                ? `<span style="font-weight: 400; color: var(--text-secondary); font-size: 0.8rem;">${getLang()==='hu'?'(1-2 mondat elegendő)':'(1-2 sentences are enough)'}</span>`
-                                : `<span style="font-weight: 400; color: var(--text-secondary); font-size: 0.8rem;">${getLang()==='hu'?'(fejtsd ki részletesen)':'(explain in detail)'}</span>`
+                    <div class="q-input-container">
+                        ${(() => {
+                            const type = question.answerType || 'detailed';
+                            const ans = answers[question.id];
+                            
+                            if (type === 'yes-no' || type === 'yes-no-reason') {
+                                return `
+                                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;" id="answer-buttons">
+                                        <button class="btn btn-secondary ans-btn ${ans.value === 'yes' ? 'active-yes' : ''}" data-val="yes" style="flex: 1; padding: 1rem;">
+                                            <i data-lucide="check-circle-2"></i> ${getLang()==='hu'?'Igen':'Yes'}
+                                        </button>
+                                        <button class="btn btn-secondary ans-btn ${ans.value === 'no' ? 'active-no' : ''}" data-val="no" style="flex: 1; padding: 1rem;">
+                                            <i data-lucide="x-circle"></i> ${getLang()==='hu'?'Nem':'No'}
+                                        </button>
+                                        <button class="btn btn-secondary ans-btn ${ans.value === 'na' ? 'active-na' : ''}" data-val="na" style="flex: 1; padding: 1rem;">
+                                            <i data-lucide="help-circle"></i> N/A
+                                        </button>
+                                    </div>
+                                    ${type === 'yes-no-reason' ? `
+                                        <div class="form-group mb-0">
+                                            <label class="form-label">${getLang()==='hu'?'Indoklás':'Reason'}</label>
+                                            <textarea id="cand-note" class="form-textarea" placeholder="${getLang()==='hu'?'Írd ide az indoklást...':'Type the reason here...'}">${ans.note || ''}</textarea>
+                                        </div>
+                                    ` : ''}
+                                `;
+                            } else if (type === 'date') {
+                                return `
+                                    <div class="form-group mb-0">
+                                        <input type="date" id="cand-ans" class="form-input" style="font-size: 1.2rem; padding: 1rem;" value="${ans.text || ''}">
+                                    </div>
+                                `;
+                            } else if (type === 'number') {
+                                return `
+                                    <div class="form-group mb-0">
+                                        <input type="number" id="cand-ans" class="form-input" style="font-size: 1.2rem; padding: 1rem;" placeholder="0" value="${ans.text || ''}">
+                                    </div>
+                                `;
+                            } else if (type === 'short') {
+                                return `
+                                    <div class="form-group mb-0">
+                                        <input type="text" id="cand-ans" class="form-input" style="font-size: 1.1rem; padding: 1rem;" placeholder="${getLang()==='hu'?'Rövid válasz...':'Short answer...'}" value="${ans.text || ''}">
+                                    </div>
+                                `;
+                            } else {
+                                // detailed
+                                return `
+                                    <div class="form-group mb-0">
+                                        <textarea id="cand-ans" class="form-textarea" placeholder="${getLang()==='hu'?'Részletes válasz...':'Detailed answer...'}" style="min-height: 200px; font-size: 1.05rem;">${ans.text || ''}</textarea>
+                                    </div>
+                                `;
                             }
-                        </label>
-                        <textarea id="cand-ans" class="form-textarea"
-                            placeholder="${question.answerType === 'short' ? (getLang()==='hu'?'Írj egy rövid, tömör választ...':'Write a short, concise answer...') : (getLang()==='hu'?'Kérlek írd le részletesen a tapasztalataidat, gondolataidat...':'Please describe your experiences and thoughts in detail...')}"
-                            style="min-height: ${question.answerType === 'short' ? '80px' : '180px'}; font-size: 1rem;"
-                        >${answers[question.id].text}</textarea>
+                        })()}
                     </div>
                 </div>
+
+                <style>
+                    .ans-btn.active-yes { background-color: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); }
+                    .ans-btn.active-no { background-color: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); }
+                    .ans-btn.active-na { background-color: rgba(245, 158, 11, 0.1); border-color: var(--warning); color: var(--warning); }
+                </style>
 
                 <!-- Navigation -->
                 <div class="flex justify-between items-center">
@@ -254,19 +296,47 @@ export function renderCandidateInterview(container, params = {}) {
         document.getElementById('cand-ans')?.addEventListener('change', (e) => {
             answers[qId].text = e.target.value;
         });
+        
+        document.getElementById('cand-note')?.addEventListener('change', (e) => {
+            answers[qId].note = e.target.value;
+        });
+
+        document.querySelectorAll('.ans-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const val = e.currentTarget.dataset.val;
+                answers[qId].value = val;
+                const noteEl = document.getElementById('cand-note');
+                if (noteEl) answers[qId].note = noteEl.value;
+                const ansEl = document.getElementById('cand-ans');
+                if (ansEl) answers[qId].text = ansEl.value;
+                render();
+            });
+        });
 
         document.getElementById('btn-prev')?.addEventListener('click', () => {
-            answers[qId].text = document.getElementById('cand-ans').value;
+            const ansEl = document.getElementById('cand-ans');
+            if (ansEl) answers[qId].text = ansEl.value;
+            const noteEl = document.getElementById('cand-note');
+            if (noteEl) answers[qId].note = noteEl.value;
+
             if (currentIndex > 0) { currentIndex--; render(); }
         });
 
         document.getElementById('btn-next')?.addEventListener('click', () => {
-            answers[qId].text = document.getElementById('cand-ans').value;
+            const ansEl = document.getElementById('cand-ans');
+            if (ansEl) answers[qId].text = ansEl.value;
+            const noteEl = document.getElementById('cand-note');
+            if (noteEl) answers[qId].note = noteEl.value;
+
             if (currentIndex < totalQuestions - 1) { currentIndex++; render(); }
         });
 
         document.getElementById('btn-finish')?.addEventListener('click', () => {
-            answers[qId].text = document.getElementById('cand-ans').value;
+            const ansEl = document.getElementById('cand-ans');
+            if (ansEl) answers[qId].text = ansEl.value;
+            const noteEl = document.getElementById('cand-note');
+            if (noteEl) answers[qId].note = noteEl.value;
+
             const durationSecs = Math.floor((Date.now() - startTime) / 1000);
             
             window.appStore.saveInterview({
@@ -283,7 +353,6 @@ export function renderCandidateInterview(container, params = {}) {
             
             phase = 'done';
             render();
-            
         });
     };
 

@@ -109,11 +109,29 @@ export function renderRoleManager(container, params = {}) {
                                                     <div class="q-main">
                                                         <textarea class="q-edit-area" data-qid="${q.id}" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'">${q.text}</textarea>
                                                         <div class="q-footer">
-                                                            <div class="q-type-selector">
-                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'short' ? 'active' : ''}" data-qid="${q.id}" data-type="short">Rövid</button>
-                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'detailed' ? 'active' : ''}" data-qid="${q.id}" data-type="detailed">Részletes</button>
+                                                            <div class="q-type-selector" style="flex-wrap: wrap; gap: 6px; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%;">
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'short' ? 'active' : ''}" data-qid="${q.id}" data-type="short" title="${t('qtype.short')}">
+                                                                    <i data-lucide="align-left" style="width:12px;"></i> ${t('qtype.short').split(' ')[0]}
+                                                                </button>
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'detailed' ? 'active' : ''}" data-qid="${q.id}" data-type="detailed" title="${t('qtype.detailed')}">
+                                                                    <i data-lucide="align-justify" style="width:12px;"></i> ${t('qtype.detailed').split(' ')[0]}
+                                                                </button>
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'number' ? 'active' : ''}" data-qid="${q.id}" data-type="number" title="${t('qtype.number')}">
+                                                                    <i data-lucide="hash" style="width:12px;"></i> ${t('qtype.number')}
+                                                                </button>
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'date' ? 'active' : ''}" data-qid="${q.id}" data-type="date" title="${t('qtype.date')}">
+                                                                    <i data-lucide="calendar" style="width:12px;"></i> ${t('qtype.date')}
+                                                                </button>
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'yes-no' ? 'active' : ''}" data-qid="${q.id}" data-type="yes-no" title="${t('qtype.yes-no')}">
+                                                                    <i data-lucide="toggle-left" style="width:12px;"></i> I/N
+                                                                </button>
+                                                                <button class="type-btn ${ (q.answerType || 'detailed') === 'yes-no-reason' ? 'active' : ''}" data-qid="${q.id}" data-type="yes-no-reason" title="${t('qtype.yes-no-reason')}">
+                                                                    <i data-lucide="file-question" style="width:12px;"></i> I/N+
+                                                                </button>
                                                             </div>
-                                                            <button class="q-trash" data-qid="${q.id}"><i data-lucide="trash-2" style="width: 12px;"></i></button>
+                                                            <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; margin-top: 0.5rem;">
+                                                                <button class="q-trash" data-qid="${q.id}" style="opacity: 0.6; padding: 0.5rem; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i data-lucide="trash-2" style="width: 14px;"></i></button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>

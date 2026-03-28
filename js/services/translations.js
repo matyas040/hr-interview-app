@@ -244,6 +244,14 @@ export const translations = {
         'stats.questionnaire': 'Kérdőív',
         'stats.why_exited': 'AI elemzés – miért mentek el?',
         'stats.ai_thinking_colleague': 'Az AI elemzi a kilépési adatait…',
+
+        // Question Types
+        'qtype.date': 'Dátum',
+        'qtype.number': 'Szám',
+        'qtype.short': 'Rövid válasz',
+        'qtype.detailed': 'Részletes kifejtés',
+        'qtype.yes-no': 'Igen / Nem',
+        'qtype.yes-no-reason': 'Igen / Nem + Indoklás',
      },
     en: {
         // App Header & Common
@@ -477,6 +485,14 @@ export const translations = {
         'stats.questionnaire': 'Questionnaire',
         'stats.why_exited': 'AI analysis – why did they leave?',
         'stats.ai_thinking_colleague': 'AI is analyzing their exit data…',
+
+        // Question Types
+        'qtype.date': 'Date',
+        'qtype.number': 'Number',
+        'qtype.short': 'Short answer',
+        'qtype.detailed': 'Detailed explanation',
+        'qtype.yes-no': 'Yes / No',
+        'qtype.yes-no-reason': 'Yes / No + Reason',
      }
  };
 

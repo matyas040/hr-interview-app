@@ -160,32 +160,59 @@ export function renderActiveInterview(container, params = {}) {
                 <div class="card mb-6" style="padding: 2rem;">
                     <h3 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 2rem; line-height: 1.6;">${question.text}</h3>
                     
-                    ${isTextMode ? `
-                        <div class="form-group mb-0">
-                            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <i data-lucide="edit-3" style="width: 1rem; height: 1rem;"></i> 
-                                ${getLang()==='hu'?'Jelölt válasza':'Candidate answer'}
-                            </label>
-                            <textarea id="q-text" class="form-textarea" placeholder="${getLang()==='hu'?'Gépeld ide a válaszod...':'Type your answer here...'}" style="min-height: 200px; font-size: 1.1rem;">${answers[question.id].text || ''}</textarea>
-                        </div>
-                    ` : `
-                        <div style="display: flex; gap: 1rem; margin-bottom: 2rem;" id="answer-buttons">
-                            <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'yes' ? 'active-yes' : ''}" data-val="yes" style="flex: 1; padding: 1rem; font-size: 1rem;">
-                                <i data-lucide="check-circle-2"></i> ${getLang()==='hu'?'Igen':'Yes'}
-                            </button>
-                            <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'no' ? 'active-no' : ''}" data-val="no" style="flex: 1; padding: 1rem; font-size: 1rem;">
-                                <i data-lucide="x-circle"></i> ${getLang()==='hu'?'Nem':'No'}
-                            </button>
-                            <button class="btn btn-secondary ans-btn ${answers[question.id].value === 'na' ? 'active-na' : ''}" data-val="na" style="flex: 1; padding: 1rem; font-size: 1rem;">
-                                <i data-lucide="help-circle"></i> N/A
-                            </button>
-                        </div>
-
-                        <div class="form-group mb-0">
-                            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="message-square" style="width: 1rem; height: 1rem;"></i> ${t('eval.hr_note')} ${getLang()==='hu'?'(opcionális)':'(optional)'}</label>
-                            <textarea id="q-note" class="form-textarea" placeholder="${getLang()==='hu'?'Írd ide a jelölt válaszának részleteit...':'Write details of the candidate\'s answer here...'}">${answers[question.id].note}</textarea>
-                        </div>
-                    `}
+                    <div class="q-input-container">
+                        ${(() => {
+                            const type = question.answerType || 'detailed';
+                            const ans = answers[question.id];
+                            
+                            if (type === 'yes-no' || type === 'yes-no-reason') {
+                                return `
+                                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;" id="answer-buttons">
+                                        <button class="btn btn-secondary ans-btn ${ans.value === 'yes' ? 'active-yes' : ''}" data-val="yes" style="flex: 1; padding: 1rem;">
+                                            <i data-lucide="check-circle-2"></i> ${getLang()==='hu'?'Igen':'Yes'}
+                                        </button>
+                                        <button class="btn btn-secondary ans-btn ${ans.value === 'no' ? 'active-no' : ''}" data-val="no" style="flex: 1; padding: 1rem;">
+                                            <i data-lucide="x-circle"></i> ${getLang()==='hu'?'Nem':'No'}
+                                        </button>
+                                        <button class="btn btn-secondary ans-btn ${ans.value === 'na' ? 'active-na' : ''}" data-val="na" style="flex: 1; padding: 1rem;">
+                                            <i data-lucide="help-circle"></i> N/A
+                                        </button>
+                                    </div>
+                                    ${type === 'yes-no-reason' ? `
+                                        <div class="form-group mb-0">
+                                            <label class="form-label">${getLang()==='hu'?'Indoklás':'Reason'}</label>
+                                            <textarea id="q-note" class="form-textarea" placeholder="${getLang()==='hu'?'Írd ide az indoklást...':'Type the reason here...'}">${ans.note || ''}</textarea>
+                                        </div>
+                                    ` : ''}
+                                `;
+                            } else if (type === 'date') {
+                                return `
+                                    <div class="form-group mb-0">
+                                        <input type="date" id="q-text" class="form-input" style="font-size: 1.2rem; padding: 1rem;" value="${ans.text || ''}">
+                                    </div>
+                                `;
+                            } else if (type === 'number') {
+                                return `
+                                    <div class="form-group mb-0">
+                                        <input type="number" id="q-text" class="form-input" style="font-size: 1.2rem; padding: 1rem;" placeholder="0" value="${ans.text || ''}">
+                                    </div>
+                                `;
+                            } else if (type === 'short') {
+                                return `
+                                    <div class="form-group mb-0">
+                                        <input type="text" id="q-text" class="form-input" style="font-size: 1.1rem; padding: 1rem;" placeholder="${getLang()==='hu'?'Rövid válasz...':'Short answer...'}" value="${ans.text || ''}">
+                                    </div>
+                                `;
+                            } else {
+                                // detailed
+                                return `
+                                    <div class="form-group mb-0">
+                                        <textarea id="q-text" class="form-textarea" placeholder="${getLang()==='hu'?'Részletes válasz...':'Detailed answer...'}" style="min-height: 200px; font-size: 1.05rem;">${ans.text || ''}</textarea>
+                                    </div>
+                                `;
+                            }
+                        })()}
+                    </div>
                 </div>
 
                 <!-- Navigation Controls -->
@@ -241,18 +268,24 @@ export function renderActiveInterview(container, params = {}) {
             btn.addEventListener('click', (e) => {
                 const val = e.currentTarget.dataset.val;
                 answers[qId].value = val;
-                answers[qId].note = document.getElementById('q-note').value; // Save note before re-render
-                render(); // Quick re-render to update selected button state
+                
+                const noteEl = document.getElementById('q-note');
+                if (noteEl) answers[qId].note = noteEl.value;
+                
+                const textEl = document.getElementById('q-text');
+                if (textEl) answers[qId].text = textEl.value;
+                
+                render(); 
             });
         });
 
         // Prev
         document.getElementById('btn-prev')?.addEventListener('click', () => {
-            if (isTextMode) {
-                answers[qId].text = document.getElementById('q-text').value;
-            } else {
-                answers[qId].note = document.getElementById('q-note').value;
-            }
+            const textEl = document.getElementById('q-text');
+            if (textEl) answers[qId].text = textEl.value;
+            const noteEl = document.getElementById('q-note');
+            if (noteEl) answers[qId].note = noteEl.value;
+
             if (currentIndex > 0) {
                 currentIndex--;
                 render();
@@ -261,11 +294,11 @@ export function renderActiveInterview(container, params = {}) {
 
         // Next
         document.getElementById('btn-next')?.addEventListener('click', () => {
-            if (isTextMode) {
-                answers[qId].text = document.getElementById('q-text').value;
-            } else {
-                answers[qId].note = document.getElementById('q-note').value;
-            }
+            const textEl = document.getElementById('q-text');
+            if (textEl) answers[qId].text = textEl.value;
+            const noteEl = document.getElementById('q-note');
+            if (noteEl) answers[qId].note = noteEl.value;
+
             if (currentIndex < totalQuestions - 1) {
                 currentIndex++;
                 render();
@@ -274,11 +307,11 @@ export function renderActiveInterview(container, params = {}) {
 
         // Finish
         document.getElementById('btn-finish')?.addEventListener('click', () => {
-            if (isTextMode) {
-                answers[qId].text = document.getElementById('q-text').value;
-            } else {
-                answers[qId].note = document.getElementById('q-note').value; // save last
-            }
+            const textEl = document.getElementById('q-text');
+            if (textEl) answers[qId].text = textEl.value;
+            const noteEl = document.getElementById('q-note');
+            if (noteEl) answers[qId].note = noteEl.value;
+
             stopTimer();
             
             // Save to store
@@ -290,13 +323,13 @@ export function renderActiveInterview(container, params = {}) {
                 duration: secondsElapsed,
                 personalData,
                 answers,
-                isSelfAssessment: isTextMode, // Key change: if Hybrid Mode (text), AI treats it as self-assessment format but with objective perspective
+                isSelfAssessment: isTextMode, 
                 isTextMode,
                 issuedBy: window.appAuth.getUser()?.id || '',
-                issuedByName: window.appAuth.getUser()?.displayName || ''
+                issuedByName: window.appAuth.getUser()?.displayName || '',
+                type: 'hr' // Distinguish from 'candidate' self-assessment
             });
             
-            // Navigate to dashboard
             window.navigateTo('dashboard');
         });
     };
