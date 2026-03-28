@@ -390,6 +390,8 @@ export function renderRoleManager(container, params = {}) {
                     lucide.createIcons();
                 }
             });
+
+            lucide.createIcons();
         }
     };
 
