@@ -1,15 +1,15 @@
-import { t, getLang, setLang } from './services/translations.js?v=46';
-import { Store } from './store.js?v=46';
-import { renderLogin } from './views/login.js?v=46';
-import { renderDashboard } from './views/dashboard.js?v=46';
-import { renderRoleManager } from './views/roleManager.js?v=46';
-import { renderInterviewSetup } from './views/interviewSetup.js?v=46';
-import { renderActiveInterview } from './views/activeInterview.js?v=46';
-import { renderCandidateInterview } from './views/candidateInterview.js?v=46';
-import { renderEvaluation } from './views/evaluation.js?v=46';
-import { renderAdminPanel } from './views/adminPanel.js?v=46';
-import { renderExitInterview } from './views/exitInterview.js?v=46';
-import { renderHrStats } from './views/hrStats.js?v=46';
+import { t, getLang, setLang } from './services/translations.js?v=60';
+import { Store } from './store.js?v=60';
+import { renderLogin } from './views/login.js?v=60';
+import { renderDashboard } from './views/dashboard.js?v=60';
+import { renderRoleManager } from './views/roleManager.js?v=60';
+import { renderInterviewSetup } from './views/interviewSetup.js?v=60';
+import { renderActiveInterview } from './views/activeInterview.js?v=60';
+import { renderCandidateInterview } from './views/candidateInterview.js?v=60';
+import { renderEvaluation } from './views/evaluation.js?v=60';
+import { renderAdminPanel } from './views/adminPanel.js?v=60';
+import { renderExitInterview } from './views/exitInterview.js?v=60';
+import { renderHrStats } from './views/hrStats.js?v=60';
 
 // Firebase Auth Bridge
 class Auth {
