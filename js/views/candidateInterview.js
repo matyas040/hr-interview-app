@@ -56,12 +56,12 @@ export function renderCandidateInterview(container, params = {}) {
             container.innerHTML = `
                 <div style="max-width: 640px; margin: 0 auto; padding-top: 2rem;">
                     <div style="text-align: center; margin-bottom: 2.5rem;">
-                        <div style="width: 4rem; height: 4rem; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; box-shadow: 0 8px 24px rgba(59,130,246,0.25);">
-                            <i data-lucide="clipboard-list" style="width: 2rem; height: 2rem; color: white;"></i>
+                        <div style="width: 5rem; height: 5rem; background: var(--accent-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: var(--shadow-glow); border: 4px solid var(--bg-secondary);">
+                            <i data-lucide="clipboard-list" style="width: 2.5rem; height: 2.5rem; color: white;"></i>
                         </div>
-                        <h2 style="font-size: 1.75rem; font-weight: 600;">${t('iv.welcome')} ${candidateName}!</h2>
-                        <p style="color: var(--text-secondary); margin-top: 0.5rem;">${t('admin.table.role').split(' /')[0]}: <strong style="color: var(--text-primary);">${role.title}</strong></p>
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.25rem;">${totalQuestions} ${t('setup.questions_count')} ${role.pdfName ? ` · 📎 ${t('role.attachment_title')}` : ''}</p>
+                        <h2 style="font-size: 2.25rem; font-weight: 700; color: var(--text-primary);">${t('iv.welcome')} ${candidateName}!</h2>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 1.125rem;">${t('admin.table.role').split(' /')[0]}: <strong style="color: var(--accent);">${role.title}</strong></p>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">${totalQuestions} ${t('setup.questions_count')} ${role.pdfName ? ` · 📎 ${t('role.attachment_title')}` : ''}</p>
                     </div>
 
                     <div class="card" style="padding: 2rem;">
@@ -80,9 +80,26 @@ export function renderCandidateInterview(container, params = {}) {
                             <input type="date" id="cand-birthdate" class="form-input" max="${new Date().toISOString().slice(0, 10)}" value="${personalData.birthDate}">
                         </div>
 
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-4">
                             <label class="form-label">${getLang()==='hu'?'Lakcím':'Address'}</label>
                             <input type="text" id="cand-address" class="form-input" placeholder="pl. 1051 Budapest, Fő utca 1." value="${personalData.address}">
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="form-label">${getLang() === 'hu' ? 'Önéletrajz (CV) feltöltése (opcionális)' : 'Upload CV (optional)'}</label>
+                            <div id="cv-upload-container" class="mt-2">
+                                <input type="file" id="cand-cv-file" style="display: none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                <button class="btn btn-secondary w-full" id="btn-trigger-cv" style="width: 100%; border-style: dashed; border-width: 2px;">
+                                    <i data-lucide="upload"></i> ${getLang() === 'hu' ? 'Fájl választása' : 'Select File'}
+                                </button>
+                                <div id="cand-cv-preview" class="mt-3" style="display: none; font-size: 0.85rem; padding: 0.75rem; background: var(--accent-soft); border-radius: 8px; border: 1px solid var(--accent);">
+                                    <div class="flex justify-between items-center">
+                                        <span id="cand-cv-filename" style="font-weight: 600;"></span>
+                                        <button id="btn-remove-cv" style="color: var(--danger);"><i data-lucide="x" style="width: 14px;"></i></button>
+                                    </div>
+                                    <div id="cand-cv-ai-status" class="mt-1" style="color: var(--text-secondary); font-style: italic;"></div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-6 flex justify-end">
@@ -94,6 +111,50 @@ export function renderCandidateInterview(container, params = {}) {
                 </div>
             `;
             lucide.createIcons();
+
+            let uploadedCv = { base64: null, mimeType: null, fileName: null, analysis: null };
+
+            const cvInput = document.getElementById('cand-cv-file');
+            const triggerBtn = document.getElementById('btn-trigger-cv');
+            const previewDiv = document.getElementById('cand-cv-preview');
+            const filenameSpan = document.getElementById('cand-cv-filename');
+            const aiStatus = document.getElementById('cand-cv-ai-status');
+
+            if (triggerBtn) {
+                triggerBtn.addEventListener('click', () => cvInput.click());
+                cvInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    uploadedCv.fileName = file.name;
+                    uploadedCv.mimeType = file.type;
+                    filenameSpan.innerText = file.name;
+                    previewDiv.style.display = 'block';
+                    triggerBtn.style.display = 'none';
+                    aiStatus.innerText = getLang() === 'hu' ? '⏳ Elemzés...' : '⏳ Analyzing...';
+
+                    const reader = new FileReader();
+                    reader.onload = async (event) => {
+                        const base64 = event.target.result;
+                        uploadedCv.base64 = base64;
+                        try {
+                            const { analyzeCv } = await import('../services/aiService.js');
+                            const analysis = await analyzeCv(base64, file.type, role.title);
+                            uploadedCv.analysis = analysis;
+                            aiStatus.innerText = `✨ AI: ${analysis.substring(0, 80)}...`;
+                        } catch (err) {
+                            aiStatus.innerText = '❌ AI error';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+                document.getElementById('btn-remove-cv')?.addEventListener('click', () => {
+                    uploadedCv = { base64: null, mimeType: null, fileName: null, analysis: null };
+                    previewDiv.style.display = 'none';
+                    triggerBtn.style.display = 'block';
+                    cvInput.value = '';
+                });
+            }
+
 
             document.getElementById('btn-start-questions')?.addEventListener('click', () => {
                 const ce = document.getElementById('cand-email').value.trim();
@@ -348,7 +409,13 @@ export function renderCandidateInterview(container, params = {}) {
                 isSelfAssessment: true,
                 personalData,
                 issuedBy:     issuedBy     || '',
-                issuedByName: issuedByName || ''
+                issuedByName: issuedByName || '',
+                cvText: uploadedCv.analysis,
+                cvData: uploadedCv.base64 ? {
+                    fileName: uploadedCv.fileName,
+                    mimeType: uploadedCv.mimeType,
+                    base64: uploadedCv.base64
+                } : null
             });
             
             phase = 'done';

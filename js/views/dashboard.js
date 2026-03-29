@@ -4,15 +4,22 @@ export function renderDashboard(container) {
     const roles = window.appStore.getRoles();
     const interviews = window.appStore.getInterviews();
 
+    const currentUser = window.appAuth.getUser();
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
     container.innerHTML = `
+        <div id="ai-observer-container"></div>
+
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h2 style="font-size: 1.5rem; font-weight: 600;">${t('dashboard.title')}</h2>
+                <h2 style="font-size: 2rem; font-weight: 800; color: var(--text-primary);">${t('dashboard.title')}</h2>
                 <p style="color: var(--text-secondary);" class="mt-1">${t('dashboard.subtitle')}</p>
             </div>
-            <button class="btn btn-secondary" onclick="window.navigateTo('roleManager')">
-                <i data-lucide="settings"></i> ${t('dashboard.manage_roles')}
-            </button>
+            ${isAdmin ? `
+                <button class="btn btn-secondary" onclick="window.navigateTo('roleManager')">
+                    <i data-lucide="settings"></i> ${t('dashboard.manage_roles')}
+                </button>
+            ` : ''}
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;" class="mb-6">
@@ -74,11 +81,13 @@ export function renderDashboard(container) {
                                 <div style="display: flex; align-items: center; gap: 1rem;">
                                     <div class="text-right" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
                                         <p style="font-size: 0.875rem;">${dateStr}</p>
-                                        ${!isExit ? `<span style="font-size: 0.75rem; color: ${hs.color}; font-weight: 500;">${hs.label}</span>` : ''}
+                                        ${!isExit ? `<span style="font-size: 0.75rem; color: ${hs.color}; font-weight: 600;">${hs.label}</span>` : ''}
                                     </div>
-                                    <button class="btn btn-danger" style="padding: 0.4rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 2.2rem; height: 2.2rem;" title="${t('dashboard.delete_tooltip')}" onclick="event.stopPropagation(); if(confirm('${t('dashboard.delete_confirm')}')) { window.appStore.deleteInterview('${inv.id}'); window.navigateTo('dashboard'); }">
-                                        <i data-lucide="trash-2" style="width: 1rem; height: 1rem;"></i>
-                                    </button>
+                                    ${isAdmin ? `
+                                        <button class="btn btn-danger" style="padding: 0.4rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 2.2rem; height: 2.2rem;" title="${t('dashboard.delete_tooltip')}" onclick="event.stopPropagation(); if(confirm('${t('dashboard.delete_confirm')}')) { window.appStore.deleteInterview('${inv.id}'); window.navigateTo('dashboard'); }">
+                                            <i data-lucide="trash-2" style="width: 1rem; height: 1rem;"></i>
+                                        </button>
+                                    ` : ''}
                                 </div>
                             </div>
                         `;
@@ -89,6 +98,59 @@ export function renderDashboard(container) {
     `;
 
     lucide.createIcons();
+    loadAiObserver(roles, interviews);
+}
+
+async function loadAiObserver(roles, interviews) {
+    const observerContainer = document.getElementById('ai-observer-container');
+    if (!observerContainer) return;
+
+    // Show loading skeleton
+    observerContainer.innerHTML = `
+        <div class="ai-observer-panel" style="opacity: 0.7;">
+            <div class="flex items-center gap-3">
+                <i data-lucide="brain-circuit" class="pulse-icon" style="color: var(--accent);"></i>
+                <span style="font-weight: 600; color: var(--accent);">${getLang()==='hu'?'AI Megfigyelő: Elemzés...':'AI Observer: Analyzing...'}</span>
+            </div>
+        </div>
+    `;
+    lucide.createIcons();
+
+    try {
+        const { getSystemInsights } = await import('../services/aiObserver.js');
+        const insights = await getSystemInsights(interviews, roles, inspectionsPlaceholder()); // Placeholder for exit interviews
+        
+        if (!insights || insights.length === 0) {
+            observerContainer.innerHTML = '';
+            return;
+        }
+
+        observerContainer.innerHTML = `
+            <div class="ai-observer-panel">
+                <div class="flex items-center gap-2 mb-4">
+                    <i data-lucide="brain-circuit" style="color: var(--accent); width: 1.25rem;"></i>
+                    <h3 style="font-size: 0.875rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">AI Észrevételek</h3>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+                    ${insights.map(item => `
+                        <div class="ai-alert-item ai-alert-${item.type}">
+                            <i data-lucide="${item.type === 'warning' ? 'alert-triangle' : (item.type === 'success' ? 'check-circle' : 'info')}" style="width: 1.25rem; flex-shrink: 0; margin-top: 0.1rem; color: ${item.type === 'warning' ? 'var(--danger)' : (item.type === 'success' ? 'var(--success)' : 'var(--accent)')};"></i>
+                            <p style="font-size: 0.9rem; line-height: 1.4; color: var(--text-primary);">${item.text}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    } catch (err) {
+        console.error("Failed to load AI Observer insights:", err);
+        observerContainer.innerHTML = '';
+    }
+}
+
+function inspectionsPlaceholder() {
+    // Helper to get exit interviews since they are in the same interviews collection but with type 'exit'
+    return window.appStore.getInterviews().filter(i => i.type === 'exit');
 }
 
 

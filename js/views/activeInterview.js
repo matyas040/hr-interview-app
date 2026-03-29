@@ -1,7 +1,7 @@
 import { t, getLang } from '../services/translations.js?v=37';
 
 export function renderActiveInterview(container, params = {}) {
-    const { roleId, candidateName, date, isTextMode = false } = params;
+    const { roleId, candidateName, date, isTextMode = false, cvData = null } = params;
     const role = window.appStore.getRoleById(roleId);
 
     if (!role || role.questions.length === 0) {
@@ -61,8 +61,16 @@ export function renderActiveInterview(container, params = {}) {
             container.innerHTML = `
                 <div style="max-width: 640px; margin: 0 auto; padding-top: 2rem;">
                     <div style="text-align: center; margin-bottom: 2.5rem;">
-                        <h2 style="font-size: 1.75rem; font-weight: 600;">${getLang()==='hu'?'Interjú indítása':'Start Interview'}: ${candidateName}</h2>
+                        <h2 style="font-size: 2rem; font-weight: 700; color: var(--accent);">${getLang()==='hu'?'Interjú indítása':'Start Interview'}</h2>
+                        <h3 style="font-size: 1.25rem; font-weight: 500; margin-top: 0.25rem;">${candidateName}</h3>
                         <p style="color: var(--text-secondary); margin-top: 0.5rem;">${t('admin.table.role').split(' /')[0]}: <strong style="color: var(--text-primary);">${role.title}</strong></p>
+                        ${cvData ? `
+                            <div class="mt-4 flex justify-center">
+                                <span style="background: var(--accent-soft); color: var(--accent); padding: 0.4rem 1rem; border-radius: 2rem; font-size: 0.85rem; border: 1px solid var(--accent); display: flex; align-items: center; gap: 0.4rem;">
+                                    <i data-lucide="file-check" style="width: 1rem;"></i> CV csatolva
+                                </span>
+                            </div>
+                        ` : ''}
                     </div>
 
                     <div class="card" style="padding: 2rem;">
@@ -327,7 +335,13 @@ export function renderActiveInterview(container, params = {}) {
                 isTextMode,
                 issuedBy: window.appAuth.getUser()?.id || '',
                 issuedByName: window.appAuth.getUser()?.displayName || '',
-                type: 'hr' // Distinguish from 'candidate' self-assessment
+                type: 'hr', // Distinguish from 'candidate' self-assessment
+                cvText: cvData ? cvData.analysis : null,
+                cvData: cvData ? {
+                    fileName: cvData.fileName,
+                    mimeType: cvData.mimeType,
+                    base64: cvData.base64
+                } : null
             });
             
             window.navigateTo('dashboard');

@@ -1,11 +1,11 @@
 // ─── Gemini AI Service ────────────────────────────────────────────────────────
 import { getLang } from './translations.js';
 
-const GEMINI_MODEL = 'models/gemini-2.5-flash';
+const GEMINI_MODEL = 'models/gemini-2.0-flash';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 export function getApiKey() {
-    return localStorage.getItem('hr_gemini_api_key') || 'AIzaSyDMad8x3apyVMSOJUjYphyRfoe0MuBycUk';
+    return localStorage.getItem('hr_gemini_api_key') || '';
 }
 
 export function setApiKey(key) {
@@ -82,12 +82,23 @@ function buildPrompt(interview, role) {
         ? `\n\n--- MUNKAKÖRI LEÍRÁS (az értékelés alapja) ---\n${role.jdText.slice(0, 4000)}\n--- VÉGE ---`
         : (role.jdPdfBase64 ? '\n\n[A munkaköri leírás PDF-ben csatolva van — vedd figyelembe az elvárásoknál!]' : '');
 
+    const cvPrompt = interview.cvText 
+        ? `\n\n--- JELÖLT ÖNÉLETRAJZA (kivonat) ---\n${interview.cvText.slice(0, 3000)}\n--- VÉGE ---`
+        : '';
+
     const systemInstructions = lang === 'hu' 
         ? `Te egy profi HR elemző vagy. Feladatod egy interjú kiértékelése a megadott munkakörhöz. VÁLASZOLJ MAGYARUL.
 KONTEXTUS: ${context}
-MUNKAKÖR: ${role.title}${jdContext}
+MUNKAKÖR: ${role.title}${jdContext}${cvPrompt}
 JELÖLT: ${interview.candidateName}
-
+`
+        : `You are a professional HR analyst. Evaluate the interview for the given role. ANSWER IN ENGLISH.
+CONTEXT: ${context}
+ROLE: ${role.title}${jdContext}${cvPrompt}
+CANDIDATE: ${interview.candidateName}
+`;
+    
+    const fullPrompt = systemInstructions + `
 --- KÉRDÉSEK ÉS VÁLASZOK ---
 ${qas}
 --- VÉGE ---
@@ -95,40 +106,18 @@ ${qas}
 Értékeld a jelöltet az alábbi JSON struktúrában. CSAK valid JSON-t adj vissza.
 KÖTELEZŐ SZABÁLYOK:
 1. SPECIFIKUSSÁG: Csak az adott válaszokat vizsgáld.
-2. NYELV: Az értékelés szövege magyar legyen.
+2. NYELV: Az értékelés szövege ${lang === 'hu' ? 'magyar' : 'angol'} legyen.
 3. FORMÁTUM: Vedd figyelembe a válasz típusát (pl. egy szám vagy dátum relevanciáját a munkakörhöz).
 
 {
   "overallScore": <0-100>,
-  "overallLabel": "<Kiváló|Jó|Megfelelő|Gyenge|Nem ajánlott>",
+  "overallLabel": "${lang === 'hu' ? 'Kiváló|Jó|Megfelelő|Gyenge|Nem ajánlott' : 'Excellent|Good|Fair|Poor|Not recommended'}",
   "summary": "<összefoglaló>",
-  "recommendation": "<Erősen ajánlott|Ajánlott|Megfontolásra ajánlott|Nem ajánlott>",
-  "perAnswer": [ ${perAnswerTemplate} ]
-}`
-        : `You are a professional HR analyst. Evaluate the interview for the given role. ANSWER IN ENGLISH.
-CONTEXT: ${context}
-ROLE: ${role.title}${jdContext}
-CANDIDATE: ${interview.candidateName}
-
---- QUESTIONS AND ANSWERS ---
-${qas}
---- END ---
-
-Evaluate the candidate in the following JSON structure. Return ONLY valid JSON.
-MANDATORY RULES:
-1. SPECIFICITY: Only evaluate the provided answers.
-2. LANGUAGE: Evaluation text MUST be in English.
-3. FORMAT: Consider the type of the answer (e.g., relevance of a number or date to the role).
-
-{
-  "overallScore": <0-100>,
-  "overallLabel": "<Excellent|Good|Fair|Poor|Not recommended>",
-  "summary": "<summary>",
-  "recommendation": "<Strongly recommended|Recommended|Consider|Not recommended>",
+  "recommendation": "${lang === 'hu' ? 'Erősen ajánlott|Ajánlott|Megfontolásra ajánlott|Nem ajánlott' : 'Strongly recommended|Recommended|Consider|Not recommended'}",
   "perAnswer": [ ${perAnswerTemplate} ]
 }`;
 
-    return systemInstructions;
+    return fullPrompt;
 }
 
 /**
@@ -329,4 +318,42 @@ ANSWER IN ENGLISH. Return ONLY a JSON array in the following format:
 
     const cleaned = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
     return JSON.parse(cleaned);
+}
+
+/**
+ * Analyzes a CV (Image, PDF, or Word) and extracts a text summary.
+ * cvBase64: base64 string
+ * mimeType: image/jpeg, application/pdf, etc.
+ */
+export async function analyzeCv(cvBase64, mimeType, roleTitle) {
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error('NO_API_KEY');
+
+    const lang = getLang();
+    const prompt = lang === 'hu'
+        ? `Te egy HR szakértő vagy. Elemezd a mellékelt Önéletrajzot (CV) a "${roleTitle}" munkakör szempontjából.
+Földrajzi elhelyezkedés, tapasztalat, kulcsfontosságú kompetenciák és technológiai ismeretek kigyűjtése.
+Adj vissza egy tömör összefoglalót (max 5 mondat).`
+        : `You are an HR expert. Analyze the attached CV for the "${roleTitle}" role.
+Extract location, experience, key competencies, and tech stack.
+Return a concise summary (max 5 sentences).`;
+
+    const parts = [
+        { text: prompt },
+        { inlineData: { mimeType, data: cvBase64.split(',')[1] || cvBase64 } }
+    ];
+
+    const res = await fetch(`${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: { temperature: 0.2 }
+        })
+    });
+
+    if (!res.ok) throw new Error(`CV Analysis failed: ${res.status}`);
+    
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }

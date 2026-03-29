@@ -204,10 +204,10 @@ class App {
                         </button>
                     ` : ''}
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="width: 2rem; height: 2rem; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; color: white;">${displayInitial}</div>
+                        <div style="width: 2.5rem; height: 2.5rem; background: var(--accent-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: white; border: 2px solid var(--bg-secondary); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);">${displayInitial}</div>
                         <div style="font-size: 0.875rem;">
-                            <div style="font-weight: 500;">${displayName}</div>
-                            <div style="color: var(--text-secondary); font-size: 0.75rem;">${role === 'admin' ? t('role.admin') : t('role.hr')}</div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${displayName}</div>
+                            <div style="color: var(--accent); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em;">${role === 'admin' ? t('role.admin') : t('role.hr')}</div>
                         </div>
                     </div>
                 ` : ''}
@@ -299,6 +299,7 @@ class App {
                 renderEvaluation(this.container, params);
                 break;
             case 'adminPanel':
+                if (window.appAuth.getUser()?.role !== 'admin') { this.navigate('dashboard'); return; }
                 this.updateHeader();
                 renderAdminPanel(this.container);
                 break;
@@ -306,6 +307,7 @@ class App {
                 renderExitInterview(this.container, params);
                 break;
             case 'hrStats':
+                if (window.appAuth.getUser()?.role !== 'admin') { this.navigate('dashboard'); return; }
                 this.updateHeader();
                 renderHrStats(this.container);
                 break;

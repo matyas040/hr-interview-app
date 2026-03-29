@@ -1,43 +1,43 @@
 :root {
-    /* Luxury Light Mode - White, Gold, Black */
-    --bg-primary: #fdfbf7;
+    /* Premium Midnight Emerald - Light Theme (Surface focused) */
+    --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
-    --bg-card: rgba(255, 255, 255, 0.6);
-    --text-primary: #111111;
-    --text-secondary: #555555;
-    --border-color: rgba(197, 160, 89, 0.2);
-    --accent: #c5a059; /* Luxury Gold */
-    --accent-hover: #b38f4d;
-    --accent-gradient: linear-gradient(135deg, #c5a059 0%, #e8d099 50%, #c5a059 100%);
-    --accent-soft: rgba(197, 160, 89, 0.15);
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: rgba(6, 78, 59, 0.1);
+    --accent: #059669; /* Emerald 600 */
+    --accent-hover: #047857;
+    --accent-gradient: linear-gradient(135deg, #064e3b 0%, #10b981 100%);
+    --accent-soft: rgba(16, 185, 129, 0.1);
     --success: #10b981;
     --danger: #ef4444;
     --warning: #f59e0b;
-    --shadow-sm: 0 4px 12px rgba(197, 160, 89, 0.08);
-    --shadow-md: 0 12px 32px rgba(197, 160, 89, 0.12);
-    --shadow-glow: 0 8px 24px rgba(197, 160, 89, 0.35);
-    --radius-md: 12px;
+    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-glow: 0 0 15px rgba(16, 185, 129, 0.3);
+    --radius-md: 16px;
     --radius-round: 9999px;
-    --font-family: 'Inter', system-ui, sans-serif;
-    --glass-bg: rgba(255, 255, 255, 0.85);
+    --font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    --glass-bg: rgba(255, 255, 255, 0.7);
 }
 
 [data-theme="dark"] {
-    /* Luxury Dark Mode - Deep Black, Gold, White */
-    --bg-primary: #050505;
-    --bg-secondary: #0a0a0a;
-    --bg-card: rgba(15, 15, 15, 0.5);
-    --text-primary: #fafafa;
-    --text-secondary: #a3a3a3;
-    --border-color: rgba(212, 175, 55, 0.2);
-    --accent: #d4af37; /* Metallic Gold */
-    --accent-hover: #f1c40f;
-    --accent-gradient: linear-gradient(135deg, #a67c00 0%, #e0bc36 50%, #a67c00 100%);
-    --accent-soft: rgba(212, 175, 55, 0.15);
-    --shadow-sm: 0 4px 12px rgba(0,0,0,0.8);
-    --shadow-md: 0 16px 40px rgba(0,0,0,0.9);
-    --shadow-glow: 0 8px 24px rgba(212, 175, 55, 0.25);
-    --glass-bg: rgba(5, 5, 5, 0.85);
+    /* Premium Midnight Emerald - Dark Theme (Deep Oceanic) */
+    --bg-primary: #020617; /* Slate 950 */
+    --bg-secondary: #0f172a; /* Slate 900 */
+    --bg-card: rgba(15, 23, 42, 0.6);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: rgba(16, 185, 129, 0.2);
+    --accent: #10b981; /* Emerald 500 */
+    --accent-hover: #34d399;
+    --accent-gradient: linear-gradient(135deg, #064e3b 0%, #10b981 100%);
+    --accent-soft: rgba(16, 185, 129, 0.15);
+    --shadow-sm: 0 4px 12px rgba(0,0,0,0.5);
+    --shadow-md: 0 16px 40px rgba(0,0,0,0.7);
+    --shadow-glow: 0 0 25px rgba(16, 185, 129, 0.2);
+    --glass-bg: rgba(2, 6, 23, 0.8);
 }
 
 * {
@@ -113,10 +113,11 @@ button {
     background-size: 200% auto;
     color: #fff;
     border: none;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 [data-theme="dark"] .btn-primary {
-    color: #111;
+    color: #fff;
 }
 .btn-primary:hover {
     background-position: right center;
@@ -128,15 +129,16 @@ button {
     background-color: transparent;
     border: 1px solid var(--border-color);
     color: var(--text-primary);
+    backdrop-filter: blur(4px);
 }
 .btn-secondary:hover {
-    background-color: var(--bg-secondary);
-    border-color: var(--text-primary);
+    background-color: var(--accent-soft);
+    border-color: var(--accent);
 }
 
-.btn-success { background-color: var(--success); color: white; }
-.btn-danger { background-color: var(--danger); color: white; }
-.btn-warning { background-color: var(--warning); color: white; }
+.btn-success { background-color: var(--success); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+.btn-danger { background-color: var(--danger); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
+.btn-warning { background-color: var(--warning); color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2); }
 
 .btn-icon {
     padding: 0.5rem;
@@ -165,18 +167,18 @@ main {
 
 .card {
     background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 1.75rem;
     box-shadow: var(--shadow-sm);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     box-shadow: var(--shadow-md);
-    border-color: rgba(197, 160, 89, 0.4);
+    border-color: var(--accent);
 }
 
 /* Form inputs */
@@ -227,3 +229,51 @@ main {
 .justify-between { justify-content: space-between; }
 .gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem; }
+
+/* AI Observer Alerts */
+.ai-observer-panel {
+    background: linear-gradient(135deg, rgba(6, 78, 59, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+.ai-observer-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--accent);
+}
+.ai-alert-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 0.5rem;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+.ai-alert-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-color);
+}
+.ai-alert-info { border-left: 3px solid #3b82f6; }
+.ai-alert-warning { border-left: 3px solid #f59e0b; }
+.ai-alert-success { border-left: 3px solid #10b981; }
+
+.pulse-icon {
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@font-face {
+    font-family: 'Outfit';
+    src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+}
