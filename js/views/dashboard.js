@@ -8,8 +8,6 @@ export function renderDashboard(container) {
     const isAdmin = currentUser && currentUser.role === 'admin';
 
     container.innerHTML = `
-        <div id="ai-observer-container"></div>
-
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h2 style="font-size: 2rem; font-weight: 800; color: var(--text-primary);">${t('dashboard.title')}</h2>
@@ -98,59 +96,4 @@ export function renderDashboard(container) {
     `;
 
     lucide.createIcons();
-    loadAiObserver(roles, interviews);
 }
-
-async function loadAiObserver(roles, interviews) {
-    const observerContainer = document.getElementById('ai-observer-container');
-    if (!observerContainer) return;
-
-    // Show loading skeleton
-    observerContainer.innerHTML = `
-        <div class="ai-observer-panel" style="opacity: 0.7;">
-            <div class="flex items-center gap-3">
-                <i data-lucide="brain-circuit" class="pulse-icon" style="color: var(--accent);"></i>
-                <span style="font-weight: 600; color: var(--accent);">${getLang()==='hu'?'AI Megfigyelő: Elemzés...':'AI Observer: Analyzing...'}</span>
-            </div>
-        </div>
-    `;
-    lucide.createIcons();
-
-    try {
-        const { getSystemInsights } = await import('../services/aiObserver.js?v=61');
-        const insights = await getSystemInsights(interviews, roles, inspectionsPlaceholder()); // Placeholder for exit interviews
-        
-        if (!insights || insights.length === 0) {
-            observerContainer.innerHTML = '';
-            return;
-        }
-
-        observerContainer.innerHTML = `
-            <div class="ai-observer-panel">
-                <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="brain-circuit" style="color: var(--accent); width: 1.25rem;"></i>
-                    <h3 style="font-size: 0.875rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">AI Észrevételek</h3>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
-                    ${insights.map(item => `
-                        <div class="ai-alert-item ai-alert-${item.type}">
-                            <i data-lucide="${item.type === 'warning' ? 'alert-triangle' : (item.type === 'success' ? 'check-circle' : 'info')}" style="width: 1.25rem; flex-shrink: 0; margin-top: 0.1rem; color: ${item.type === 'warning' ? 'var(--danger)' : (item.type === 'success' ? 'var(--success)' : 'var(--accent)')};"></i>
-                            <p style="font-size: 0.9rem; line-height: 1.4; color: var(--text-primary);">${item.text}</p>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-        lucide.createIcons();
-    } catch (err) {
-        console.error("Failed to load AI Observer insights:", err);
-        observerContainer.innerHTML = '';
-    }
-}
-
-function inspectionsPlaceholder() {
-    // Helper to get exit interviews since they are in the same interviews collection but with type 'exit'
-    return window.appStore.getInterviews().filter(i => i.type === 'exit');
-}
-
-
