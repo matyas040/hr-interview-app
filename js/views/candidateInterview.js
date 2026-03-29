@@ -26,6 +26,8 @@ export function renderCandidateInterview(container, params = {}) {
     
     let answers = {};
     role.questions.forEach(q => { answers[q.id] = { value: null, note: '', text: '' }; });
+    
+    let uploadedCv = { base64: null, mimeType: null, fileName: null, analysis: null };
 
     const render = () => {
         container.innerHTML = '';
@@ -111,8 +113,6 @@ export function renderCandidateInterview(container, params = {}) {
                 </div>
             `;
             lucide.createIcons();
-
-            let uploadedCv = { base64: null, mimeType: null, fileName: null, analysis: null };
 
             const cvInput = document.getElementById('cand-cv-file');
             const triggerBtn = document.getElementById('btn-trigger-cv');
