@@ -117,7 +117,7 @@ async function loadAiObserver(roles, interviews) {
     lucide.createIcons();
 
     try {
-        const { getSystemInsights } = await import('../services/aiObserver.js');
+        const { getSystemInsights } = await import('../services/aiObserver.js?v=61');
         const insights = await getSystemInsights(interviews, roles, inspectionsPlaceholder()); // Placeholder for exit interviews
         
         if (!insights || insights.length === 0) {

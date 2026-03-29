@@ -1,4 +1,4 @@
-import { analyzeInterview, getApiKey, analyzeCv } from './aiService.js';
+import { analyzeInterview, getApiKey, analyzeCv } from './aiService.js?v=61';
 import { getLang } from './translations.js';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';

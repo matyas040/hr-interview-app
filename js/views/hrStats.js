@@ -1,5 +1,5 @@
 import { t, getLang } from '../services/translations.js?v=37';
-import { generateTurnoverReport } from '../services/aiService.js';
+import { generateTurnoverReport } from '../services/aiService.js?v=61';
 
 /**
  * HR Statistics — admin-only view.

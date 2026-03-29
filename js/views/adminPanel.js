@@ -251,7 +251,7 @@ export function renderAdminPanel(container) {
             if (!key) return;
             st.innerHTML = `<span>⏳ Tesztelés...</span>`;
             try {
-                const { testApiKey } = await import('../services/aiService.js');
+                const { testApiKey } = await import('../services/aiService.js?v=61');
                 await testApiKey(key);
                 st.innerHTML = `<span style="color: var(--success);">✓ Sikeres teszt!</span>`;
             } catch(e) {

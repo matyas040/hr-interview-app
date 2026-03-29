@@ -102,7 +102,7 @@ export function renderInterviewSetup(container, params = {}) {
             uploadedCv.base64 = base64;
 
             try {
-                const { analyzeCv } = await import('../services/aiService.js');
+                const { analyzeCv } = await import('../services/aiService.js?v=61');
                 const analysis = await analyzeCv(base64, file.type, role.title);
                 uploadedCv.analysis = analysis;
                 aiStatus.innerText = `✨ AI: ${analysis.substring(0, 150)}...`;
