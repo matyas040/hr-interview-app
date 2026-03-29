@@ -2,7 +2,7 @@ import { analyzeInterview, getApiKey, analyzeCv } from './aiService.js';
 import { getLang } from './translations.js';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_MODEL = 'models/gemini-1.5-flash'; // Using 1.5 Flash for observer
+const GEMINI_MODEL = 'models/gemini-2.5-flash'; // Using 2.5 Flash for observer
 
 /**
  * AI Observer Service
